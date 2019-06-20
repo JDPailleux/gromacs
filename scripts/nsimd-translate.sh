@@ -1,22 +1,29 @@
 #!/bin/bash
 
-## Get project root path
-GROMACS_DIR="$( git rev-parse --show-toplevel )"
-
-## Translator setup
-TRANSLATOR=/home/jpailleux/Bureau/nsdev/nstranslator/build/nstranslator
-TRANSLATOR_OPTIONS="\
-  -extra-arg=-std=c++11 \
-  -extra-arg=-I$HOME/Bureau/gromacs/build/src/ \
-  -extra-arg=-I$HOME/Bureau/gromacs/src \
-"
-
-TRANSLATOR_REPORT="${GROMACS_DIR}/NSIMD-TRANSLATED.md"
 
 ## Output to stderr
 stderr() {
     echo "$@" > /dev/stderr
 }
+
+## Usage
+if [ ! -e "$1" ]; then
+    stderr "usage: $0 <translator>"
+    exit 1
+fi
+
+## Get project root path
+GROMACS_DIR="$( git rev-parse --show-toplevel )"
+
+## Translator setup
+TRANSLATOR="$1"
+TRANSLATOR_OPTIONS="\
+  -extra-arg=-std=c++11 \
+  -extra-arg=-I${GROMACS_DIR}/build/src/ \
+  -extra-arg=-I${GROMACS_DIR}/src \
+"
+TRANSLATOR_REPORT="${GROMACS_DIR}/NSIMD-TRANSLATED.md"
+
 
 ## Apply translator to given SIMD impl and create translated files
 translate() {
