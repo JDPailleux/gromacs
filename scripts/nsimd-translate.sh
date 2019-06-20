@@ -4,8 +4,13 @@
 GROMACS_DIR="$( git rev-parse --show-toplevel )"
 
 ## Translator setup
-TRANSLATOR=./nstranslator
-TRANSLATOR_OPTIONS=""
+TRANSLATOR=/home/jpailleux/Bureau/nsdev/nstranslator/build/nstranslator
+TRANSLATOR_OPTIONS="\
+  -extra-arg=-std=c++11 \
+  -extra-arg=-I$HOME/Bureau/gromacs/build/src/ \
+  -extra-arg=-I$HOME/Bureau/gromacs/src \
+"
+
 TRANSLATOR_REPORT="${GROMACS_DIR}/NSIMD-TRANSLATED.md"
 
 ## Output to stderr
@@ -32,7 +37,8 @@ translate() {
         if [ -e "${H}" ]; then
             echo "** translating: ${H}" > /dev/stderr
             ## Translate and output to a .nsimd.h (to keep track of what has been translated) 
-            ${TRANSLATOR} -simd=${SIMD} ${H} -o ${H_TRANSLATED}
+            echo ${TRANSLATOR} -simd=${SIMD} ${H} -o=${H_TRANSLATED}
+            ${TRANSLATOR} -simd=${SIMD} ${TRANSLATOR_OPTIONS} ${H} -o=${H_TRANSLATED}
         else
             stderr "** error: no such file: ${H}"
         fi
@@ -48,8 +54,10 @@ report() {
         H="$( echo ${f} | sed 's/\.nsimd.h/.h/g' )"
         H_COUNT="$( grep -E ${SIMD_MARKERS} ${H} | wc -l )"
         H_TRANSLATED_COUNT="$( grep -E ${SIMD_MARKERS} ${f} | wc -l )"
-        R="$( echo "(${H_COUNT} - ${H_TRANSLATED_COUNT}) / ${H_COUNT}" | bc )"
-        echo "$H: ${R}%"
+        ## Use scale so can use decimal operations
+        R="$( echo "scale=2; ((${H_COUNT} - ${H_TRANSLATED_COUNT}) / ${H_COUNT}) * 100" | bc )"
+        H_PRETTY="$( echo ${H} | sed "s#${GROMACS_DIR}/##" )"
+        echo "${H_PRETTY}: ${R}% (original=${H_COUNT}, translated=${H_TRANSLATED_COUNT})"
     done
 }
 
