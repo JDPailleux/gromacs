@@ -171,6 +171,13 @@ elseif(GMX_SIMD_ACTIVE MATCHES "AVX2_")
         set(SIMD_STATUS_MESSAGE "Enabling 256-bit AVX2 SIMD instructions using CXX flags: ${SIMD_AVX2_CXX_FLAGS}")
     endif()
 
+elseif(GMX_SIMD_ACTIVE STREQUAL "NSIMD")
+
+    set(SIMD_C_FLAGS "${NSIMD_COMPILE_FLAGS}")
+    set(SIMD_CXX_FLAGS "${NSIMD_COMPILE_FLAGS}")
+    set(GMX_SIMD_X86_${GMX_SIMD_ACTIVE} 1)
+    set(SIMD_STATUS_MESSAGE "Enabling NSIMD instructions using CXX flags: ${NSIMD_COMPILE_FLAGS}")
+
 elseif(GMX_SIMD_ACTIVE STREQUAL "MIC")
 
     # No flags needed. Not testing.

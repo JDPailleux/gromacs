@@ -251,6 +251,30 @@ int main(){__m256i x=_mm256_set1_epi32(5);x=_mm256_add_epi32(x,x);return _mm256_
     set(${CXX_FLAGS_RESULT} ${SIMD_AVX2_CXX_FLAGS_RESULT} CACHE INTERNAL "Result of test for AVX2 C++ flags" FORCE)
 endfunction()
 
+# NSIMD (Agenium-Scale)
+function(gmx_find_nsimd_flags C_FLAGS_RESULT CXX_FLAGS_RESULT C_FLAGS_VARIABLE CXX_FLAGS_VARIABLE)
+    find_x86_toolchain_flags(TOOLCHAIN_C_FLAGS TOOLCHAIN_CXX_FLAGS)
+
+    set(TOOLCHAIN_FLAG_FOR_NSIMD "-DAVX2 -mavx2") # Just for NSIDM with AVX2
+
+    gmx_find_flags(NSIMD_C_FLAGS_RESULT NSIMD_CXX_FLAGS_RESULT
+        "#include <nsimd/nsimd.h>
+        #include <nsimd/cxx_adv_api.hpp>
+        #include <nsimd/cxx_adv_api_functions.hpp>
+int main(){nsimd::pack<int> x= nsimd::set1<pack<int>>(5);x= x + x;return 0;}"
+        TOOLCHAIN_C_FLAGS TOOLCHAIN_CXX_FLAGS
+        NSIMD_C_FLAGS NSIMD_CXX_FLAGS
+        "${TOOLCHAIN_FLAG_FOR_NSIMD}" "-DAVX2 -mavx2" "/arch:NSIMD" "-hgnu")
+
+    if(${NSIMD_C_FLAGS_RESULT})
+        set(${C_FLAGS_VARIABLE} "${TOOLCHAIN_C_FLAGS} ${NSIMD_C_FLAGS}" CACHE INTERNAL "C flags required for NSIMD instructions")
+    endif()
+    if(${NSIMD_CXX_FLAGS_RESULT})
+        set(${CXX_FLAGS_VARIABLE} "${TOOLCHAIN_CXX_FLAGS} ${NSIMD_CXX_FLAGS}" CACHE INTERNAL "C++ flags required for NSIMD instructions")
+    endif()
+    set(${C_FLAGS_RESULT} ${NSIMD_C_FLAGS_RESULT} CACHE INTERNAL "Result of test for NSIMD C flags" FORCE)
+    set(${CXX_FLAGS_RESULT} ${NSIMD_CXX_FLAGS_RESULT} CACHE INTERNAL "Result of test for NSIMD C++ flags" FORCE)
+endfunction()
 
 # AVX-512F (Skylake-X)
 function(gmx_find_simd_avx_512_flags C_FLAGS_RESULT CXX_FLAGS_RESULT C_FLAGS_VARIABLE CXX_FLAGS_VARIABLE)
