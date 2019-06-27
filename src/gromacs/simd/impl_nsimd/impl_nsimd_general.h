@@ -33,8 +33,8 @@
  * the research papers on the package. Check out http://www.gromacs.org.
  */
 
-#ifndef GMX_SIMD_IMPL_X86_AVX2_256_GENERAL_H
-#define GMX_SIMD_IMPL_X86_AVX2_256_GENERAL_H
+#ifndef GMX_SIMD_IMPL_NSIMD_GENERAL_H
+#define GMX_SIMD_IMPL_NSIMD_GENERAL_H
 
 #include <nsimd/cxx_adv_api.hpp>
 #include <nsimd/cxx_adv_api_functions.hpp>
@@ -51,4 +51,4 @@ simdPrefetch(void *m)
 
 }      // namespace gmx
 
-#endif // GMX_SIMD_IMPL_X86_AVX2_256_GENERAL_H
+#endif // GMX_SIMD_IMPL_NSIMD_GENERAL_H

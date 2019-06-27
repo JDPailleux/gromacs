@@ -33,10 +33,10 @@
  * the research papers on the package. Check out http://www.gromacs.org.
  */
 
-#ifndef GMX_SIMD_IMPL_X86_AVX2_256_DEFINITIONS_H
-#define GMX_SIMD_IMPL_X86_AVX2_256_DEFINITIONS_H
+#ifndef GMX_SIMD_IMPL_NSIMD_DEFINITIONS_H
+#define GMX_SIMD_IMPL_NSIMD_DEFINITIONS_H
 
-// Capability definitions for 256-bit AVX2
+// Capability definitions for 256-bit NSIMD
 #define GMX_SIMD                                1
 #define GMX_SIMD_HAVE_FLOAT                     1
 #define GMX_SIMD_HAVE_DOUBLE                    1
@@ -64,8 +64,8 @@
 #define GMX_SIMD_HAVE_NATIVE_EXP_DOUBLE         0
 #define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_FLOAT   1
 #define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_DOUBLE  1
-#define GMX_SIMD_HAVE_HSIMD_UTIL_FLOAT          1
-#define GMX_SIMD_HAVE_HSIMD_UTIL_DOUBLE         0 // Not needed for width 4
+#define GMX_SIMD_HAVE_HSIMD_UTIL_FLOAT          1 // 1
+#define GMX_SIMD_HAVE_HSIMD_UTIL_DOUBLE         0 // 1 :Not needed for width 4
 #define GMX_SIMD_HAVE_4NSIMD_UTIL_FLOAT         1
 
 #define GMX_SIMD4_HAVE_FLOAT                    1
@@ -81,4 +81,4 @@
 #define GMX_SIMD_RSQRT_BITS                    11
 #define GMX_SIMD_RCP_BITS                      11
 
-#endif // GMX_SIMD_IMPL_X86_AVX2_256_DEFINITIONS_H
+#endif // GMX_SIMD_IMPL_NSIMD_DEFINITIONS_H
