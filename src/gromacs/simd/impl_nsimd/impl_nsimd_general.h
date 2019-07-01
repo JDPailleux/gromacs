@@ -43,12 +43,58 @@
 namespace gmx
 {
 
-static inline void
-simdPrefetch(void *m)
-{
-    _mm_prefetch(reinterpret_cast<const char *>(m), _MM_HINT_T0);
+#if (defined(NSIMD_SSE2) || defined(NSIMD_SSE42) || \
+     defined(NSIMD_AVX) || defined(NSIMD_AVX2))
+static inline void 
+simdPrefetch(void *m) {
+  _mm_prefetch(reinterpret_cast<const char *>(m), _MM_HINT_T0);
 }
 
+#elif (defined(NSIMD_AVX512_KNL) || defined(NSIMD_AVX512_SKYLAKE))
+
+static inline void 
+simdPrefetch(void *m) {
+  _mm_prefetch(reinterpret_cast<const char *>(m), _MM_HINT_T0);
+}
+/*! \brief Return integer from AVX-512 mask
+ *
+ *  \param m  Mask suitable for use with AVX-512 instructions
+ *
+ *  \return Short integer representation of mask
+ */
+static inline short
+avx512Mask2Int(__mmask16 m)
+{
+    return static_cast<short>(m);
+}
+
+/*! \brief Return AVX-512 mask from integer
+ *
+ *  \param m  Short integer
+ *
+ *  \return Mask suitable for use with AVX-512 instructions.
+ */
+static inline __mmask16
+avx512Int2Mask(short i)
+{
+    return static_cast<__mmask16>(i);
+}
+
+}
+
+
+#else 
+
+static inline void
+simdPrefetch(void * m)
+{
+#ifdef __GNUC__
+    __builtin_prefetch(m);
+#endif
+}
+
+
+#endif
 }      // namespace gmx
 
 #endif // GMX_SIMD_IMPL_NSIMD_GENERAL_H

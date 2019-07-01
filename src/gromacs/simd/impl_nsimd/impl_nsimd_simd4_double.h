@@ -46,8 +46,6 @@
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
 
-#include "impl_nsimd_simd4_double.h"
-
 
 namespace gmx
 {
@@ -71,7 +69,7 @@ class Simd4DBool
         Simd4DBool() {}
 
         //! \brief Construct from scalar boo
-        Simd4DBool(bool b) : simdInternal_(nsimd::reinterpret<nsimd::pack<double> >(nsimd::set1<nsimd::pack<int> >(b ? 4294967295U : 0))) {}
+        Simd4DBool(bool b) : simdInternal_(nsimd::reinterpret<nsimd::pack<double> >(nsimd::set1<nsimd::pack<int> >(b ? 0xFFFFFFFF : 0))) {}
 
         // Internal utility constructor to simplify return statement
         Simd4DBool(nsimd::pack<double> simd) : simdInternal_(simd) {}
@@ -261,36 +259,7 @@ trunc(Simd4Double x)
     };
 }
 
-//####################################
-static inline double gmx_simdcall
-dotProduct(Simd4Double a, Simd4Double b)
-{
-    __m128d /*Invalid register*/ tmp1, tmp2;
-    a.simdInternal_ = a.simdInternal_ * b.simdInternal_;
-    tmp1             = _mm256_castpd256_pd128(nsimd::cvt<__m256>(a.simdInternal_));
-    tmp2             = _mm256_extractf128_pd(nsimd::cvt<__m256>(a.simdInternal_), 0x1);
 
-    tmp1 = tmp1 + __builtin_ia32_vpermilpd((__v2df)(__m128d)(tmp1), (int)((((0) << 1) || (1))));
-    tmp1 = tmp1 + tmp2;
-    return *reinterpret_cast<double *>(&tmp1);
-}
-//####################################
-//####################################
-static inline void gmx_simdcall
-transpose(Simd4Double * v0, Simd4Double * v1,
-          Simd4Double * v2, Simd4Double * v3)
-{
-    nsimd::pack<double> t1, t2, t3, t4;
-    t1                = nsimd::cvt<nsimd::pack<double>>(_mm256_unpacko_pd(nsimd::cvt<__m256>(v0->simdInternal_), nsimd::cvt<__m256>(v1->simdInternal_)));
-    t2                = nsimd::cvt<nsimd::pack<double>>(_mm256_unpackhi_pd(nsimd::cvt<__m256>(v0->simdInternal_), nsimd::cvt<__m256>(v1->simdInternal_)));
-    t3                = nsimd::cvt<nsimd::pack<double>>(_mm256_unpacko_pd(nsimd::cvt<__m256>(v2->simdInternal_), nsimd::cvt<__m256>(v3->simdInternal_)));
-    t4                = nsimd::cvt<nsimd::pack<double>>(_mm256_unpackhi_pd(nsimd::cvt<__m256>(v2->simdInternal_), nsimd::cvt<__m256>(v3->simdInternal_)));
-    v0->simdInternal_ = nsimd::cvt<nsimd::pack<double>>(_mm256_permute2f128_pd(nsimd::cvt<__m256>(t1), nsimd::cvt<__m256>(t3), 0x20));
-    v1->simdInternal_ = nsimd::cvt<nsimd::pack<double>>(_mm256_permute2f128_pd(nsimd::cvt<__m256>(t2), nsimd::cvt<__m256>(t4), 0x20));
-    v2->simdInternal_ = nsimd::cvt<nsimd::pack<double>>(_mm256_permute2f128_pd(nsimd::cvt<__m256>(t1), nsimd::cvt<__m256>(t3), 0x31));
-    v3->simdInternal_ = nsimd::cvt<nsimd::pack<double>>(_mm256_permute2f128_pd(nsimd::cvt<__m256>(t2), nsimd::cvt<__m256>(t4), 0x31));
-}
-//####################################
 static inline Simd4DBool gmx_simdcall
 operator==(Simd4Double a, Simd4Double b)
 {
@@ -338,6 +307,10 @@ operator||(Simd4DBool a, Simd4DBool b)
                a.simdInternal_ || b.simdInternal_
     };
 }
+
+// Include the rest of the functions
+#include "impl_nsimd_simd4_double_defined.h"
+
 }      // namespace gm
 
 #endif // GMX_SIMD_IMPL_NSIMD_SIMD4_DOUBLE_H

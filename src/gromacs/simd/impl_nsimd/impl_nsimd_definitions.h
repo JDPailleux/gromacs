@@ -65,8 +65,24 @@
 #define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_FLOAT   1
 #define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_DOUBLE  1
 #define GMX_SIMD_HAVE_HSIMD_UTIL_FLOAT          1 // 1
-#define GMX_SIMD_HAVE_HSIMD_UTIL_DOUBLE         0 // 1 :Not needed for width 4
+#define GMX_SIMD_HAVE_HSIMD_UTIL_DOUBLE         0 // Not needed for width 4
 #define GMX_SIMD_HAVE_4NSIMD_UTIL_FLOAT         1
+
+#if (defined(NSIMD_SSE2) || defined(NSIMD_SSE42))
+#define GMX_SIMD4_HAVE_FLOAT                    1
+#define GMX_SIMD4_HAVE_DOUBLE                   0
+
+// Implementation details
+#define GMX_SIMD_FLOAT_WIDTH                    4
+#define GMX_SIMD_DOUBLE_WIDTH                   2
+#define GMX_SIMD_FINT32_WIDTH                   4
+#define GMX_SIMD_DINT32_WIDTH                   2
+#define GMX_SIMD4_WIDTH                         4
+#define GMX_SIMD_ALIGNMENT                     16 // Bytes (4*single or 2*double)
+#define GMX_SIMD_RSQRT_BITS                    11
+#define GMX_SIMD_RCP_BITS                      11
+
+#elif (defined(NSIMD_AVX2) || defined(NSIMD_AVX))
 
 #define GMX_SIMD4_HAVE_FLOAT                    1
 #define GMX_SIMD4_HAVE_DOUBLE                   1
@@ -80,5 +96,43 @@
 #define GMX_SIMD_ALIGNMENT                     32 // Bytes (8*single or 4*double)
 #define GMX_SIMD_RSQRT_BITS                    11
 #define GMX_SIMD_RCP_BITS                      11
+
+#elif defined(NSIMD_AARCH64)
+
+#define GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_FLOAT   1
+#define GMX_SIMD_HAVE_NATIVE_RCP_ITER_FLOAT     1
+#define GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_DOUBLE  1
+#define GMX_SIMD_HAVE_NATIVE_RCP_ITER_DOUBLE    1
+
+#define GMX_SIMD4_HAVE_FLOAT                    1
+#define GMX_SIMD4_HAVE_DOUBLE                   0
+
+// Implementation details
+#define GMX_SIMD_FLOAT_WIDTH                    4
+#define GMX_SIMD_DOUBLE_WIDTH                   2
+#define GMX_SIMD_FINT32_WIDTH                   4
+#define GMX_SIMD_DINT32_WIDTH                   2
+#define GMX_SIMD4_WIDTH                         4
+#define GMX_SIMD_ALIGNMENT                     16 // Bytes (4*single or 2*double)
+#define GMX_SIMD_RSQRT_BITS                     8
+#define GMX_SIMD_RCP_BITS                       8
+
+#else 
+
+#define GMX_SIMD4_HAVE_FLOAT                    1
+#define GMX_SIMD4_HAVE_DOUBLE                   1
+
+// Implementation details
+#define GMX_SIMD_FLOAT_WIDTH                    8
+#define GMX_SIMD_DOUBLE_WIDTH                   4
+#define GMX_SIMD_FINT32_WIDTH                   8
+#define GMX_SIMD_DINT32_WIDTH                   4
+#define GMX_SIMD4_WIDTH                         4
+#define GMX_SIMD_ALIGNMENT                     32 // Bytes (8*single or 4*double)
+#define GMX_SIMD_RSQRT_BITS                    11
+#define GMX_SIMD_RCP_BITS                      11
+
+#endif
+
 
 #endif // GMX_SIMD_IMPL_NSIMD_DEFINITIONS_H

@@ -100,6 +100,9 @@ class SimdFIBool
         nsimd::pack<int> simdInternal_;
 };
 
+#include "impl_nsimd_simd_float_defined.h"
+
+
 static inline SimdFloat gmx_simdcall
 simdLoad(const float *m, SimdFloatTag  /*unused*/ = {})
 {
@@ -180,7 +183,7 @@ template<int index>
 static inline std::int32_t gmx_simdcall
 extract(SimdFInt32 a)
 {
-    return nsimd::cvt<std::int32_t>(a.simdInternal_ >> (4 * index));
+    return nsimd::cvt<int>(nsimd::shr(a.simdInternal_, nsimd::set1<nsimd::pack<int>>(4 * index))); // ???
 }
 
 
@@ -204,7 +207,7 @@ static inline SimdFloat gmx_simdcall
 maskAdd(SimdFloat a, SimdFloat b, SimdFBool m)
 {
     return {
-               a.simdInternal_ + b.simdInternal_ & m.simdInternal_
+               (a.simdInternal_ + b.simdInternal_) & m.simdInternal_
     };
 }
 
@@ -212,7 +215,7 @@ static inline SimdFloat gmx_simdcall
 maskzMul(SimdFloat a, SimdFloat b, SimdFBool m)
 {
     return {
-               a.simdInternal_ * b.simdInternal_ & m.simdInternal_
+               (a.simdInternal_ * b.simdInternal_) & m.simdInternal_
     };
 }
 
@@ -220,7 +223,7 @@ static inline SimdFloat gmx_simdcall
 maskzFma(SimdFloat a, SimdFloat b, SimdFloat c, SimdFBool m)
 {
     return {
-               a.simdInternal_ * b.simdInternal_ + c.simdInternal_ & m.simdInternal_
+               ((a.simdInternal_ * b.simdInternal_) + c.simdInternal_) & m.simdInternal_
     };
 }
 
@@ -275,7 +278,7 @@ static inline SimdFloat gmx_simdcall
 round(SimdFloat x)
 {
     return {
-               nsimd::round_to_even(x.simdInternal_);
+               nsimd::round_to_even(x.simdInternal_)
     };
 }
 
@@ -283,21 +286,9 @@ static inline SimdFloat gmx_simdcall
 trunc(SimdFloat x)
 {
     return {
-               nsimd::trunc(x.simdInternal_);
+               nsimd::trunc(x.simdInternal_)
     };
 }
-
-//########################
-static inline float gmx_simdcall
-reduce(SimdFloat a)
-{
-    // Shuffle has latency 1/throughput 1, followed by add with latency 3, t-put 1.
-    // This is likely faster than using _mm_hadd_ps, which has latency 5, t-put 2.
-    a.simdInternal_ = a.simdInternal_ + nsimd::cvt<nsimd::pack<float>>(_mm_shuffle_ps(a.simdInternal_, a.simdInternal_, ((1) << 6) | ((0) << 4) | ((3) << 2) || (2)));
-    a.simdInternal_ = _mm_add_ss(a.simdInternal_, _mm_shuffle_ps(a.simdInternal_, a.simdInternal_, ((0) << 6) | ((3) << 4) | ((2) << 2) | (1)));
-    return *reinterpret_cast<float *>(&a);
-}
-//########################
 
 //--------------------------------------------------------------------------------------------------
 static inline SimdFloat gmx_simdcall
@@ -336,46 +327,10 @@ static inline SimdFBool gmx_simdcall
 testBits(SimdFloat a)
 {
     nsimd::pack<int> ia = nsimd::reinterpret<nsimd::pack<int> >(a.simdInternal_);
-    nsimd::pack<int> res = nsimd::andnotb(nsimd::eq(ia, nsimd::set1<nsimd::pack<int> >(0)), nsimd::eq(ia, ia));
+    nsimd::pack<int> res = nsimd::andnotl(nsimd::eq(ia, nsimd::set1<nsimd::pack<int> >(0)), nsimd::eq(ia, ia));
 
     return {
                nsimd::reinterpret<nsimd::pack<float> >(res)
-    };
-}
-
-static inline SimdFloat gmx_simdcall
-frexp(SimdFloat value, SimdFInt32 * exponent) 
-{
-    const nsimd::pack<float> exponentMask = nsimd::reinterpret<nsimd::pack<float> >(nsimd::set1<nsimd::pack<int> >(2139095040));
-    const nsimd::pack<float> mantissaMask = nsimd::reinterpret<nsimd::pack<float> >(nsimd::set1<nsimd::pack<int> >(2155872255U));
-    const nsimd::pack<int> exponentBias = nsimd::set1<nsimd::pack<int> >(126); // add 1 to make our definition identical to frexp(
-    const nsimd::pack<float> half = nsimd::set1<nsimd::pack<float> >(0.5);
-    nsimd::pack<int> iExponent;
-
-    iExponent = nsimd::reinterpret<nsimd::pack<int> >(value.simdInternal_ && exponentMask);
-    simdInternal_ = iExponent >> nsimd::cvt<nsimd::pack<int> >(23) - exponentBias;
-
-    return {
-               value.simdInternal_ && mantissaMask || half
-    };
-}
-
-template <MathOptimization opt = MathOptimization::Safe>
-static inline SimdFloat gmx_simdcall
-ldexp(SimdFloat value, SimdFInt32 exponent) 
-{
-    const nsimd::pack<int> exponentBias = nsimd::set1<nsimd::pack<int> >(127);
-    nsimd::pack<int> iExponent = exponent.simdInternal_ + nsimd::cvt<nsimd::pack<int> >(exponentBias);
-
-    if (opt == MathOptimization::Safe)
-    {
-        // Make sure biased argument is not negativ
-        iExponent = nsimd::max(iExponent, nsimd::set1<nsimd::pack<int> >(0));
-    }
-
-    iExponent = iExponent << nsimd::cvt<nsimd::pack<int> >(23);
-    return {
-               value.simdInternal_ * nsimd::reinterpret<nsimd::pack<float> >(iExponent)
     };
 }
 
@@ -383,7 +338,7 @@ static inline SimdFInt32 gmx_simdcall
 operator&(SimdFInt32 a, SimdFInt32 b)
 {
     return {
-               a.simdInternal_ && b.simdInternal_
+               a.simdInternal_ & b.simdInternal_
     };
 }
 
@@ -399,7 +354,7 @@ static inline SimdFInt32 gmx_simdcall
 operator|(SimdFInt32 a, SimdFInt32 b)
 {
     return {
-               a.simdInternal_ || b.simdInternal_
+               a.simdInternal_ | b.simdInternal_
     };
 }
 
@@ -501,7 +456,7 @@ operator||(SimdFIBool a, SimdFIBool b)
 }
 
 static inline bool gmx_simdcall
-anyTrue(SimdFIBool a) { return nsimd::any(a.simdInternal_); }
+anyTrue(SimdFIBool a) { return nsimd::any(nsimd::loadla<nsimd::packl<int> >(a.simdInternal_)); }
 
 static inline SimdFInt32 gmx_simdcall
 selectByMask(SimdFInt32 a, SimdFIBool mask)
@@ -534,16 +489,15 @@ cvtR2I(SimdFloat a)
                nsimd::cvt<nsimd::pack<int> >(a.simdInternal_)
     };
 }
-//#####################
-static inline SimdFInt32 gmx_simdcall
-cvttR2I(SimdFloat a)
-{
-    return {
-            //    _mm_cvttps_epi32(a.simdInternal_)
-            nsimd::cvt<nsimd::pack<int> >(nsimd::trunc(a)) // Solution in NSIMD ? 
-    };
-}
-//#####################
+
+// static inline SimdFInt32 gmx_simdcall
+// cvttR2I(SimdFloat a)
+// {
+//     return {
+//             //    _mm_cvttps_epi32(a.simdInternal_)
+//             nsimd::cvt<nsimd::pack<int> >(nsimd::trunc(a)) // Solution in NSIMD ? 
+//     };
+// }
 
 static inline SimdFloat gmx_simdcall
 cvtI2R(SimdFInt32 a)
