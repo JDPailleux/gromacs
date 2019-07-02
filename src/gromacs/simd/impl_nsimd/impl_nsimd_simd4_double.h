@@ -68,8 +68,8 @@ class Simd4DBool
     public:
         Simd4DBool() {}
 
-        //! \brief Construct from scalar boo
-        Simd4DBool(bool b) : simdInternal_(nsimd::reinterpret<nsimd::pack<double> >(nsimd::set1<nsimd::pack<int> >(b ? 0xFFFFFFFF : 0))) {}
+        //! \brief Construct from scalar bool
+        Simd4DBool(bool b) : simdInternal_(nsimd::reinterpret<nsimd::pack<double> >(nsimd::set1<nsimd::pack<long> >(b ? 0x1FFFFFFF : 0l))) {}
 
         // Internal utility constructor to simplify return statement
         Simd4DBool(nsimd::pack<double> simd) : simdInternal_(simd) {}
@@ -111,7 +111,7 @@ static inline Simd4Double gmx_simdcall
 simd4SetZeroD()
 {
     return {
-               nsimd::set1<nsimd::pack<double> >(0)
+               nsimd::set1<nsimd::pack<double> >(0.0)
     };
 }
 
@@ -265,6 +265,7 @@ operator==(Simd4Double a, Simd4Double b)
 {
     return {
                a.simdInternal_ == b.simdInternal_
+            // nsimd::eq(a.simdInternal_, b.simdInternal_)
     };
 }
 
@@ -296,7 +297,7 @@ static inline Simd4DBool gmx_simdcall
 operator&&(Simd4DBool a, Simd4DBool b)
 {
     return {
-               a.simdInternal_ && b.simdInternal_
+               a.simdInternal_ & b.simdInternal_
     };
 }
 
@@ -304,7 +305,7 @@ static inline Simd4DBool gmx_simdcall
 operator||(Simd4DBool a, Simd4DBool b)
 {
     return {
-               a.simdInternal_ || b.simdInternal_
+               a.simdInternal_ | b.simdInternal_
     };
 }
 

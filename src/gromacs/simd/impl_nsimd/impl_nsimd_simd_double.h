@@ -66,7 +66,7 @@ class SimdDBool
     public:
         SimdDBool() {}
 
-        SimdDBool(bool b) : simdInternal_(nsimd::reinterpret<nsimd::pack<double> >(nsimd::set1<nsimd::pack<int> >(b ? 0xFFFFFFFF : 0))) {}
+        SimdDBool(bool b) : simdInternal_(nsimd::reinterpret<nsimd::pack<double> >(nsimd::set1<nsimd::pack<long> >(b ? 0x1FFFFFFF : 0l))) {}
 
         // Internal utility constructor to simplify return statements
         SimdDBool(nsimd::pack<double> simd) : simdInternal_(simd) {}
@@ -108,7 +108,7 @@ static inline SimdDouble gmx_simdcall
 setZeroD()
 {
     return {
-               nsimd::set1<nsimd::pack<double> >(0)
+               nsimd::set1<nsimd::pack<double> >(0.0)
     };
 }
 
@@ -344,7 +344,7 @@ static inline SimdDouble gmx_simdcall
 selectByNotMask(SimdDouble a, SimdDBool mask)
 {
     return {
-               mask.simdInternal_, a.simdInternal_
+               nsimd::andnotb(mask.simdInternal_, a.simdInternal_)
     };
 }
 
@@ -352,12 +352,13 @@ static inline SimdDouble gmx_simdcall
 blend(SimdDouble a, SimdDouble b, SimdDBool sel)
 {
     return {
-               nsimd::if_else1(a.simdInternal_, b.simdInternal_, sel.simdInternal_)
+            //    nsimd::if_else1(a.simdInternal_, b.simdInternal_, sel.simdInternal_)
+            nsimd::if_else1(nsimd::cvt<nsimd::packl<double> >(sel.simdInternal_), a.simdInternal_, b.simdInternal_)
     };
 }
 
-static inline bool gmx_simdcall
-anyTrue(SimdDIBool a) { return nsimd::any(nsimd::loadla<nsimd::packl<int> >(a.simdInternal_)); }
+// static inline bool gmx_simdcall
+// anyTrue(SimdDIBool a) { return nsimd::any(nsimd::loadla<nsimd::packl<int> >(a.simdInternal_)); }
 
 
 static inline SimdDouble gmx_simdcall
@@ -392,14 +393,6 @@ fnms(SimdDouble a, SimdDouble b, SimdDouble c)
     };
 }
 
-
-static inline SimdDInt32 gmx_simdcall
-blend(SimdDInt32 a, SimdDInt32 b, SimdDIBool sel)
-{
-    return {
-               nsimd::if_else1(a.simdInternal_, b.simdInternal_, sel.simdInternal_)
-    };
-}
 
 }      // namespace gm
 

@@ -78,6 +78,26 @@ avx256Transpose3By4InLanes(__m256 * v0,
     *v2       = _mm256_shuffle_ps(t2, *v2, _MM_SHUFFLE(0, 2, 1, 0));
 }
 
+static inline void gmx_simdcall
+avx256Transpose3By4InLanes(nsimd::pack<float> * v0,
+                           nsimd::pack<float> * v1,
+                           nsimd::pack<float> * v2,
+                           __m256 * v3)
+{
+  __m256 tmp0 = v0->native_register(), tmp1 = v1->native_register(),
+         tmp2 = v2->native_register();
+  __m256 t1 = _mm256_unpacklo_ps(tmp0, tmp1);
+  __m256 t2 = _mm256_unpackhi_ps(tmp0, tmp1);
+  tmp0 = _mm256_shuffle_ps(t1, tmp2, _MM_SHUFFLE(0, 0, 1, 0));
+  tmp1 = _mm256_shuffle_ps(t1, tmp2, _MM_SHUFFLE(0, 1, 3, 2));
+  *v3 = _mm256_shuffle_ps(t2, tmp2, _MM_SHUFFLE(0, 3, 3, 2));
+  tmp2 = _mm256_shuffle_ps(t2, tmp2, _MM_SHUFFLE(0, 2, 1, 0));
+
+  *v0 = tmp0;
+  *v1 = tmp1;
+  *v2 = tmp2;
+}
+
 template <int align>
 static inline void gmx_simdcall
 gatherLoadTranspose(const float *        base,
@@ -108,10 +128,10 @@ gatherLoadTranspose(const float *        base,
     v2->simdInternal_ = _mm256_insertf128_ps(_mm256_castps128_ps256(t3), t7, 0x1);
     v3->simdInternal_ = _mm256_insertf128_ps(_mm256_castps128_ps256(t4), t8, 0x1);
 
-    tA  = _mm256_unpacklo_ps(v0->simdInternal_, v1->simdInternal_);
-    tB  = _mm256_unpacklo_ps(v2->simdInternal_, v3->simdInternal_);
-    tC  = _mm256_unpackhi_ps(v0->simdInternal_, v1->simdInternal_);
-    tD  = _mm256_unpackhi_ps(v2->simdInternal_, v3->simdInternal_);
+    tA  = _mm256_unpacklo_ps(v0->simdInternal_.native_register(), v1->simdInternal_.native_register());
+    tB  = _mm256_unpacklo_ps(v2->simdInternal_.native_register(), v3->simdInternal_.native_register());
+    tC  = _mm256_unpackhi_ps(v0->simdInternal_.native_register(), v1->simdInternal_.native_register());
+    tD  = _mm256_unpackhi_ps(v2->simdInternal_.native_register(), v3->simdInternal_.native_register());
 
     v0->simdInternal_ = _mm256_shuffle_ps(tA, tB, _MM_SHUFFLE(1, 0, 1, 0));
     v1->simdInternal_ = _mm256_shuffle_ps(tA, tB, _MM_SHUFFLE(3, 2, 3, 2));
@@ -220,13 +240,13 @@ transposeScatterStoreU(float *              base,
     assert(std::size_t(offset) % 32 == 0);
 
     avx256Transpose3By4InLanes(&v0.simdInternal_, &v1.simdInternal_, &v2.simdInternal_, &tv3);
-    _mm_maskstore_ps( base + align * offset[0], mask, _mm256_castps256_ps128(v0.simdInternal_));
-    _mm_maskstore_ps( base + align * offset[1], mask, _mm256_castps256_ps128(v1.simdInternal_));
-    _mm_maskstore_ps( base + align * offset[2], mask, _mm256_castps256_ps128(v2.simdInternal_));
+    _mm_maskstore_ps( base + align * offset[0], mask, _mm256_castps256_ps128(v0.simdInternal_.native_register()));
+    _mm_maskstore_ps( base + align * offset[1], mask, _mm256_castps256_ps128(v1.simdInternal_.native_register()));
+    _mm_maskstore_ps( base + align * offset[2], mask, _mm256_castps256_ps128(v2.simdInternal_.native_register()));
     _mm_maskstore_ps( base + align * offset[3], mask, _mm256_castps256_ps128(tv3));
-    _mm_maskstore_ps( base + align * offset[4], mask, _mm256_extractf128_ps(v0.simdInternal_, 0x1));
-    _mm_maskstore_ps( base + align * offset[5], mask, _mm256_extractf128_ps(v1.simdInternal_, 0x1));
-    _mm_maskstore_ps( base + align * offset[6], mask, _mm256_extractf128_ps(v2.simdInternal_, 0x1));
+    _mm_maskstore_ps( base + align * offset[4], mask, _mm256_extractf128_ps(v0.simdInternal_.native_register(), 0x1));
+    _mm_maskstore_ps( base + align * offset[5], mask, _mm256_extractf128_ps(v1.simdInternal_.native_register(), 0x1));
+    _mm_maskstore_ps( base + align * offset[6], mask, _mm256_extractf128_ps(v2.simdInternal_.native_register(), 0x1));
     _mm_maskstore_ps( base + align * offset[7], mask, _mm256_extractf128_ps(tv3, 0x1));
 }
 
@@ -243,12 +263,12 @@ transposeScatterIncrU(float *              base,
 
     if (align < 4)
     {
-        t5          = _mm256_unpacklo_ps(v1.simdInternal_, v2.simdInternal_);
-        t6          = _mm256_unpackhi_ps(v1.simdInternal_, v2.simdInternal_);
-        t7          = _mm256_shuffle_ps(v0.simdInternal_, t5, _MM_SHUFFLE(1, 0, 0, 0));
-        t8          = _mm256_shuffle_ps(v0.simdInternal_, t5, _MM_SHUFFLE(3, 2, 0, 1));
-        t9          = _mm256_shuffle_ps(v0.simdInternal_, t6, _MM_SHUFFLE(1, 0, 0, 2));
-        t10         = _mm256_shuffle_ps(v0.simdInternal_, t6, _MM_SHUFFLE(3, 2, 0, 3));
+        t5          = _mm256_unpacklo_ps(v1.simdInternal_.native_register(), v2.simdInternal_.native_register());
+        t6          = _mm256_unpackhi_ps(v1.simdInternal_.native_register(), v2.simdInternal_.native_register());
+        t7          = _mm256_shuffle_ps(v0.simdInternal_.native_register(), t5, _MM_SHUFFLE(1, 0, 0, 0));
+        t8          = _mm256_shuffle_ps(v0.simdInternal_.native_register(), t5, _MM_SHUFFLE(3, 2, 0, 1));
+        t9          = _mm256_shuffle_ps(v0.simdInternal_.native_register(), t6, _MM_SHUFFLE(1, 0, 0, 2));
+        t10         = _mm256_shuffle_ps(v0.simdInternal_.native_register(), t6, _MM_SHUFFLE(3, 2, 0, 3));
 
         tA          = _mm256_castps256_ps128(t7);
         tB          = _mm256_castps256_ps128(t8);
@@ -310,10 +330,10 @@ transposeScatterIncrU(float *              base,
     else
     {
         // Extra elements means we can use full width-4 load/store operations
-        t1  = _mm256_unpacklo_ps(v0.simdInternal_, v2.simdInternal_);
-        t2  = _mm256_unpackhi_ps(v0.simdInternal_, v2.simdInternal_);
-        t3  = _mm256_unpacklo_ps(v1.simdInternal_, _mm256_setzero_ps());
-        t4  = _mm256_unpackhi_ps(v1.simdInternal_, _mm256_setzero_ps());
+        t1  = _mm256_unpacklo_ps(v0.simdInternal_.native_register(), v2.simdInternal_.native_register());
+        t2  = _mm256_unpackhi_ps(v0.simdInternal_.native_register(), v2.simdInternal_.native_register());
+        t3  = _mm256_unpacklo_ps(v1.simdInternal_.native_register(), _mm256_setzero_ps());
+        t4  = _mm256_unpackhi_ps(v1.simdInternal_.native_register(), _mm256_setzero_ps());
         t5  = _mm256_unpacklo_ps(t1, t3);                             // x0 y0 z0  0 | x4 y4 z4 0
         t6  = _mm256_unpackhi_ps(t1, t3);                             // x1 y1 z1  0 | x5 y5 z5 0
         t7  = _mm256_unpacklo_ps(t2, t4);                             // x2 y2 z2  0 | x6 y6 z6 0
@@ -359,12 +379,12 @@ transposeScatterDecrU(float *              base,
 
     if (align < 4)
     {
-        t5          = _mm256_unpacklo_ps(v1.simdInternal_, v2.simdInternal_);
-        t6          = _mm256_unpackhi_ps(v1.simdInternal_, v2.simdInternal_);
-        t7          = _mm256_shuffle_ps(v0.simdInternal_, t5, _MM_SHUFFLE(1, 0, 0, 0));
-        t8          = _mm256_shuffle_ps(v0.simdInternal_, t5, _MM_SHUFFLE(3, 2, 0, 1));
-        t9          = _mm256_shuffle_ps(v0.simdInternal_, t6, _MM_SHUFFLE(1, 0, 0, 2));
-        t10         = _mm256_shuffle_ps(v0.simdInternal_, t6, _MM_SHUFFLE(3, 2, 0, 3));
+        t5          = _mm256_unpacklo_ps(v1.simdInternal_.native_register(), v2.simdInternal_.native_register());
+        t6          = _mm256_unpackhi_ps(v1.simdInternal_.native_register(), v2.simdInternal_.native_register());
+        t7          = _mm256_shuffle_ps(v0.simdInternal_.native_register(), t5, _MM_SHUFFLE(1, 0, 0, 0));
+        t8          = _mm256_shuffle_ps(v0.simdInternal_.native_register(), t5, _MM_SHUFFLE(3, 2, 0, 1));
+        t9          = _mm256_shuffle_ps(v0.simdInternal_.native_register(), t6, _MM_SHUFFLE(1, 0, 0, 2));
+        t10         = _mm256_shuffle_ps(v0.simdInternal_.native_register(), t6, _MM_SHUFFLE(3, 2, 0, 3));
 
         tA          = _mm256_castps256_ps128(t7);
         tB          = _mm256_castps256_ps128(t8);
@@ -426,10 +446,10 @@ transposeScatterDecrU(float *              base,
     else
     {
         // Extra elements means we can use full width-4 load/store operations
-        t1  = _mm256_unpacklo_ps(v0.simdInternal_, v2.simdInternal_);
-        t2  = _mm256_unpackhi_ps(v0.simdInternal_, v2.simdInternal_);
-        t3  = _mm256_unpacklo_ps(v1.simdInternal_, _mm256_setzero_ps());
-        t4  = _mm256_unpackhi_ps(v1.simdInternal_, _mm256_setzero_ps());
+        t1  = _mm256_unpacklo_ps(v0.simdInternal_.native_register(), v2.simdInternal_.native_register());
+        t2  = _mm256_unpackhi_ps(v0.simdInternal_.native_register(), v2.simdInternal_.native_register());
+        t3  = _mm256_unpacklo_ps(v1.simdInternal_.native_register(), _mm256_setzero_ps());
+        t4  = _mm256_unpackhi_ps(v1.simdInternal_.native_register(), _mm256_setzero_ps());
         t5  = _mm256_unpacklo_ps(t1, t3);                             // x0 y0 z0  0 | x4 y4 z4 0
         t6  = _mm256_unpackhi_ps(t1, t3);                             // x1 y1 z1  0 | x5 y5 z5 0
         t7  = _mm256_unpacklo_ps(t2, t4);                             // x2 y2 z2  0 | x6 y6 z6 0
@@ -462,7 +482,7 @@ transposeScatterDecrU(float *              base,
     }
 }
 
-static inline void gmx_simdca
+// static inline void gmx_simdca
 
 static inline void gmx_simdcall
 expandScalarsToTriplets(SimdFloat    scalar,
@@ -470,10 +490,10 @@ expandScalarsToTriplets(SimdFloat    scalar,
                         SimdFloat *  triplets1,
                         SimdFloat *  triplets2)
 {
-    __m256 t0 = _mm256_permute2f128_ps(scalar.simdInternal_, scalar.simdInternal_, 0x21);
-    __m256 t1 = _mm256_permute_ps(scalar.simdInternal_, _MM_SHUFFLE(1, 0, 0, 0));
+    __m256 t0 = _mm256_permute2f128_ps(scalar.simdInternal_.native_register(), scalar.simdInternal_.native_register(), 0x21);
+    __m256 t1 = _mm256_permute_ps(scalar.simdInternal_.native_register(), _MM_SHUFFLE(1, 0, 0, 0));
     __m256 t2 = _mm256_permute_ps(t0, _MM_SHUFFLE(2, 2, 1, 1));
-    __m256 t3 = _mm256_permute_ps(scalar.simdInternal_, _MM_SHUFFLE(3, 3, 3, 2));
+    __m256 t3 = _mm256_permute_ps(scalar.simdInternal_.native_register(), _MM_SHUFFLE(3, 3, 3, 2));
     triplets0->simdInternal_ = _mm256_blend_ps(t1, t2, 0xF0);
     triplets1->simdInternal_ = _mm256_blend_ps(t3, t1, 0xF0);
     triplets2->simdInternal_ = _mm256_blend_ps(t2, t3, 0xF0);
@@ -489,7 +509,7 @@ gatherLoadBySimdIntTranspose(const float *  base,
                              SimdFloat *    v3)
 {
     alignas(GMX_SIMD_ALIGNMENT) std::int32_t    offset[GMX_SIMD_FLOAT_WIDTH];
-    _mm256_store_si256( reinterpret_cast<__m256i *>(offset), simdoffset.simdInternal_);
+    _mm256_store_si256( reinterpret_cast<__m256i *>(offset), simdoffset.simdInternal_.native_register());
     gatherLoadTranspose<align>(base, offset, v0, v1, v2, v3);
 }
 
@@ -501,7 +521,7 @@ gatherLoadBySimdIntTranspose(const float *   base,
                              SimdFloat *     v1)
 {
     alignas(GMX_SIMD_ALIGNMENT) std::int32_t    offset[GMX_SIMD_FLOAT_WIDTH];
-    _mm256_store_si256( reinterpret_cast<__m256i *>(offset), simdoffset.simdInternal_);
+    _mm256_store_si256( reinterpret_cast<__m256i *>(offset), simdoffset.simdInternal_.native_register());
     gatherLoadTranspose<align>(base, offset, v0, v1);
 }
 
@@ -517,7 +537,7 @@ gatherLoadUBySimdIntTranspose(const float *  base,
     __m256 tA, tB, tC, tD;
 
     alignas(GMX_SIMD_ALIGNMENT) std::int32_t     offset[GMX_SIMD_FLOAT_WIDTH];
-    _mm256_store_si256( reinterpret_cast<__m256i *>(offset), simdoffset.simdInternal_);
+    _mm256_store_si256( reinterpret_cast<__m256i *>(offset), simdoffset.simdInternal_.native_register());
 
     t1  = _mm_loadl_pi(_mm_setzero_ps(), reinterpret_cast<const __m64 *>( base + align * offset[0] ) );
     t2  = _mm_loadl_pi(_mm_setzero_ps(), reinterpret_cast<const __m64 *>( base + align * offset[1] ) );
@@ -550,10 +570,10 @@ reduceIncr4ReturnSum(float *    m,
 
     assert(std::size_t(m) % 16 == 0);
 
-    v0.simdInternal_ = _mm256_hadd_ps(v0.simdInternal_, v1.simdInternal_);
-    v2.simdInternal_ = _mm256_hadd_ps(v2.simdInternal_, v3.simdInternal_);
-    v0.simdInternal_ = _mm256_hadd_ps(v0.simdInternal_, v2.simdInternal_);
-    t0               = _mm_add_ps(_mm256_castps256_ps128(v0.simdInternal_), _mm256_extractf128_ps(v0.simdInternal_, 0x1));
+    v0.simdInternal_ = _mm256_hadd_ps(v0.simdInternal_.native_register(), v1.simdInternal_.native_register());
+    v2.simdInternal_ = _mm256_hadd_ps(v2.simdInternal_.native_register(), v3.simdInternal_.native_register());
+    v0.simdInternal_ = _mm256_hadd_ps(v0.simdInternal_.native_register(), v2.simdInternal_.native_register());
+    t0               = _mm_add_ps(_mm256_castps256_ps128(v0.simdInternal_.native_register()), _mm256_extractf128_ps(v0.simdInternal_.native_register(), 0x1));
 
     t2 = _mm_add_ps(t0, _mm_load_ps(m));
     _mm_store_ps(m, t2);
@@ -608,8 +628,8 @@ storeDualHsimd(float *     m0,
 {
     assert(std::size_t(m0) % 16 == 0);
     assert(std::size_t(m1) % 16 == 0);
-    _mm_store_ps(m0, _mm256_castps256_ps128(a.simdInternal_));
-    _mm_store_ps(m1, _mm256_extractf128_ps(a.simdInternal_, 0x1));
+    _mm_store_ps(m0, _mm256_castps256_ps128(a.simdInternal_.native_register()));
+    _mm_store_ps(m1, _mm256_extractf128_ps(a.simdInternal_.native_register(), 0x1));
 }
 
 static inline void gmx_simdcall
@@ -619,8 +639,8 @@ incrDualHsimd(float *     m0,
 {
     assert(std::size_t(m0) % 16 == 0);
     assert(std::size_t(m1) % 16 == 0);
-    _mm_store_ps(m0, _mm_add_ps(_mm256_castps256_ps128(a.simdInternal_), _mm_load_ps(m0)));
-    _mm_store_ps(m1, _mm_add_ps(_mm256_extractf128_ps(a.simdInternal_, 0x1), _mm_load_ps(m1)));
+    _mm_store_ps(m0, _mm_add_ps(_mm256_castps256_ps128(a.simdInternal_.native_register()), _mm_load_ps(m0)));
+    _mm_store_ps(m1, _mm_add_ps(_mm256_extractf128_ps(a.simdInternal_.native_register(), 0x1), _mm_load_ps(m1)));
 }
 
 static inline void gmx_simdcall
@@ -628,7 +648,7 @@ decrHsimd(float *    m,
           SimdFloat  a)
 {
     assert(std::size_t(m) % 16 == 0);
-    __m128 asum = _mm_add_ps(_mm256_castps256_ps128(a.simdInternal_), _mm256_extractf128_ps(a.simdInternal_, 0x1));
+    __m128 asum = _mm_add_ps(_mm256_castps256_ps128(a.simdInternal_.native_register()), _mm256_extractf128_ps(a.simdInternal_.native_register(), 0x1));
     _mm_store_ps(m, _mm_sub_ps(_mm_load_ps(m), asum));
 }
 
@@ -677,9 +697,9 @@ reduceIncr4ReturnSumHsimd(float *     m,
 {
     __m128 t0, t1;
 
-    v0.simdInternal_ = _mm256_hadd_ps(v0.simdInternal_, v1.simdInternal_);
-    t0               = _mm256_extractf128_ps(v0.simdInternal_, 0x1);
-    t0               = _mm_hadd_ps(_mm256_castps256_ps128(v0.simdInternal_), t0);
+    v0.simdInternal_ = _mm256_hadd_ps(v0.simdInternal_.native_register(), v1.simdInternal_.native_register());
+    t0               = _mm256_extractf128_ps(v0.simdInternal_.native_register(), 0x1);
+    t0               = _mm_hadd_ps(_mm256_castps256_ps128(v0.simdInternal_.native_register()), t0);
     t0               = _mm_permute_ps(t0, _MM_SHUFFLE(3, 1, 2, 0));
 
     assert(std::size_t(m) % 16 == 0);
@@ -719,9 +739,9 @@ gatherLoadUTransposeSafe(const float *        base,
     SimdFInt32       vindex = simdLoad(offset, SimdFInt32Tag());
     vindex = vindex*alignSimd;
 
-    *v0 = _mm256_i32gather_ps(base + 0, vindex.simdInternal_, sizeof(float));
-    *v1 = _mm256_i32gather_ps(base + 1, vindex.simdInternal_, sizeof(float));
-    *v2 = _mm256_i32gather_ps(base + 2, vindex.simdInternal_, sizeof(float));
+    *v0 = _mm256_i32gather_ps(base + 0, vindex.simdInternal_.native_register(), sizeof(float));
+    *v1 = _mm256_i32gather_ps(base + 1, vindex.simdInternal_.native_register(), sizeof(float));
+    *v2 = _mm256_i32gather_ps(base + 2, vindex.simdInternal_.native_register(), sizeof(float));
 }
 
 #endif

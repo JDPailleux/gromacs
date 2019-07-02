@@ -118,6 +118,9 @@ testBits(SimdDouble a)
     };
 }
 
+static inline bool gmx_simdcall
+anyTrue(SimdDIBool a) { return _mm_movemask_epi8(a.simdInternal_) != 0; }
+
 static inline SimdDInt32 gmx_simdcall
 operator&(SimdDInt32 a, SimdDInt32 b)
 {
@@ -187,6 +190,14 @@ operator<(SimdDInt32 a, SimdDInt32 b)
 {
     return {
                _mm_cmplt_epi32(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+blend(SimdDInt32 a, SimdDInt32 b, SimdDIBool sel)
+{
+    return {
+               _mm_blendv_epi8(a.simdInternal_, b.simdInternal_, sel.simdInternal_)
     };
 }
 
