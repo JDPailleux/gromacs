@@ -1,4 +1,4 @@
-/
+/*
  * This file is part of the GROMACS molecular simulation package.
  *
  * Copyright (c) 2014,2015,2018, by the GROMACS development team, led by
@@ -42,7 +42,7 @@
 #include <nsimd/cxx_adv_api.hpp>
 #include <nsimd/cxx_adv_api_functions.hpp>
 
-#include "gromacs/simd/impl_x86_avx_256/impl_x86_avx_256_util_float.h"
+#include "gromacs/simd/impl_x86_avx_256/impl_x86_avx_256_util_float.nsimd.h"
 
 namespace gmx
 {

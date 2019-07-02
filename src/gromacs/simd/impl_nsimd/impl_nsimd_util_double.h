@@ -209,7 +209,7 @@ transposeScatterStoreU(double *            base,
     assert(std::size_t(offset) % 16 == 0);
 
     // v0: x0 x1 | x2 x3
-    // v1: y0 y1 | y2 y3
+    // v1: y0 y1 | y2 y3
     // v2: z0 z1 | z2 z3
 
     t0 = _mm256_unpacklo_pd(v0.simdInternal_.native_register(), v1.simdInternal_.native_register()); // x0 y0 | x2 y2
@@ -252,7 +252,7 @@ transposeScatterIncrU(double *            base,
     else
     {
         // v0: x0 x1 | x2 x3
-        // v1: y0 y1 | y2 y3
+        // v1: y0 y1 | y2 y3
         // v2: z0 z1 | z2 z3
 
         t0 = _mm256_unpacklo_pd(v0.simdInternal_.native_register(), v1.simdInternal_.native_register()); // x0 y0 | x2 y2
@@ -314,7 +314,7 @@ transposeScatterDecrU(double *            base,
     else
     {
         // v0: x0 x1 | x2 x3
-        // v1: y0 y1 | y2 y3
+        // v1: y0 y1 | y2 y3
         // v2: z0 z1 | z2 z3
 
         t0 = _mm256_unpacklo_pd(v0.simdInternal_.native_register(), v1.simdInternal_.native_register()); // x0 y0 | x2 y2

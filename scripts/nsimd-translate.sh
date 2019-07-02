@@ -31,10 +31,13 @@ translate() {
     IMPL=$2
     SIMD_IMPL_PREFIX="${GROMACS_DIR}/src/gromacs/simd/${IMPL}/${IMPL}"
     SIMD_SUFFIX="
+    _util_float
+    _util_double
     _simd_float
     _simd_double
     _simd4_float
     _simd4_double
+
     "
     for suffix in ${SIMD_SUFFIX}; do
         ## Craft header paths
@@ -69,7 +72,10 @@ report() {
 }
 
 ## Translate everything
-translate sse impl_x86_sse2
+translate avx impl_x86_avx2_256
+translate avx impl_x86_avx_256
+
+
 
 ## Now generate report
 report > "${TRANSLATOR_REPORT}"

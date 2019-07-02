@@ -1,4 +1,4 @@
-/
+/*
  * This file is part of the GROMACS molecular simulation package.
  *
  * Copyright (c) 2014,2015,2017, by the GROMACS development team, led by
@@ -43,7 +43,7 @@
 #include <nsimd/cxx_adv_api_functions.hpp>
 
 #include "gromacs/math/utilities.h"
-#include "gromacs/simd/impl_x86_avx_256/impl_x86_avx_256_simd_float.h"
+#include "gromacs/simd/impl_x86_avx_256/impl_x86_avx_256_simd_float.nsimd.h"
 
 namespace gmx
 {
@@ -111,10 +111,10 @@ frexp(SimdFloat value, SimdFInt32 * exponent)
     const nsimd::pack<float> mantissaMask = nsimd::reinterpret<nsimd::pack<float> >(nsimd::set1<nsimd::pack<int> >(2155872255U));
     const nsimd::pack<int> exponentBias = nsimd::set1<nsimd::pack<int> >(126); // add 1 to make our definition identical to frexp(
     const nsimd::pack<float> half = nsimd::set1<nsimd::pack<float> >(0.5);
-    nsimd::pack<????> iExponent;
+    nsimd::pack<int> iExponent;
 
-    iExponent = nsimd::reinterpret<nsimd::pack<????> >(value.simdInternal_ & exponentMask);
-    simdInternal_ = nsimd::cvt<nsimd::pack<int> >(iExponent) >> nsimd::cvt<nsimd::pack<int> >(23) - nsimd::cvt<nsimd::pack<int> >(exponentBias);
+    iExponent = nsimd::reinterpret<nsimd::pack<int> >(value.simdInternal_ & exponentMask);
+    simdInternal_ = iExponent >> nsimd::cvt<nsimd::pack<int> >(23) - exponentBias;
 
     return {
                value.simdInternal_ & mantissaMask | half
@@ -237,7 +237,7 @@ operator||(SimdFIBool a, SimdFIBool b)
 }
 
 static inline bool gmx_simdcall
-anyTrue(SimdFIBool a) { return _mm256_movemask_epi8(a.simdInternal_) != 0; }
+anyTrue(SimdFIBool a) { return nsimd::any(a.simdInternal_); }
 
 static inline SimdFInt32 gmx_simdcall
 selectByMask(SimdFInt32 a, SimdFIBool mask)
