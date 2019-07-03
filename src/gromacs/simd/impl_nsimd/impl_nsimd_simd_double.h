@@ -38,6 +38,10 @@
 
 #include "config.h"
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+
 #include <nsimd/cxx_adv_api.hpp>
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
@@ -133,32 +137,36 @@ operator||(SimdDBool a, SimdDBool b)
 static inline SimdDBool gmx_simdcall
 operator==(SimdDouble a, SimdDouble b)
 {
+    double x = 0xFFFFFFFF;
     return {
-              a.simdInternal_ == b.simdInternal_
+               nsimd::if_else1(a.simdInternal_== b.simdInternal_, nsimd::set1<nsimd::pack<double>>(x), nsimd::set1<nsimd::pack<double>>(0.0))
     };
 }
 
 static inline SimdDBool gmx_simdcall
 operator!=(SimdDouble a, SimdDouble b)
 {
+    double x = 0xFFFFFFFF;
     return {
-               a.simdInternal_ != b.simdInternal_
+               nsimd::if_else1(a.simdInternal_!= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(x), nsimd::set1<nsimd::pack<double>>(0.0))
     };
 }
 
 static inline SimdDBool gmx_simdcall
 operator<(SimdDouble a, SimdDouble b)
 {
+    double x = 0xFFFFFFFF;
     return {
-               a.simdInternal_ < b.simdInternal_
+               nsimd::if_else1(a.simdInternal_< b.simdInternal_, nsimd::set1<nsimd::pack<double>>(x), nsimd::set1<nsimd::pack<double>>(0.0))
     };
 }
 
 static inline SimdDBool gmx_simdcall
 operator<=(SimdDouble a, SimdDouble b)
 {
+    double x = 0xFFFFFFFF;
     return {
-              a.simdInternal_ <= b.simdInternal_
+               nsimd::if_else1(a.simdInternal_<= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(x), nsimd::set1<nsimd::pack<double>>(0.0))
     };
 }
 
@@ -352,7 +360,6 @@ static inline SimdDouble gmx_simdcall
 blend(SimdDouble a, SimdDouble b, SimdDBool sel)
 {
     return {
-            //    nsimd::if_else1(a.simdInternal_, b.simdInternal_, sel.simdInternal_)
             nsimd::if_else1(nsimd::cvt<nsimd::packl<double> >(sel.simdInternal_), a.simdInternal_, b.simdInternal_)
     };
 }

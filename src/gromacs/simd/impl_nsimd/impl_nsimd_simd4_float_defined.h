@@ -2,11 +2,17 @@
 #ifndef GMX_IMPL_NSIMD_SIMD4_FLOAT_DEFINED
 #define GMX_IMPL_NSIMD_SIMD4_FLOAT_DEFINED
 
+#include "config.h"
+
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+
 #include <nsimd/cxx_adv_api.hpp>
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
 
-#include "gromacs/math/utilities.h"
+#include "impl_nsimd_simd4_float_defined.h"
 
 namespace gmx
 {
@@ -141,8 +147,6 @@ operator*(Simd4Float a, Simd4Float b)
     };
 }
 
-// Override for AVX2 and higher
-#if GMX_SIMD_X86_AVX_256
 static inline Simd4Float gmx_simdcall
 fma(Simd4Float a, Simd4Float b, Simd4Float c)
 {
@@ -174,7 +178,6 @@ fnms(Simd4Float a, Simd4Float b, Simd4Float c)
                _mm_sub_ps(_mm_setzero_ps(), _mm_add_ps(_mm_mul_ps(a.simdInternal_, b.simdInternal_), c.simdInternal_))
     };
 }
-#endif
 
 static inline Simd4Float gmx_simdcall
 rsqrt(Simd4Float x)

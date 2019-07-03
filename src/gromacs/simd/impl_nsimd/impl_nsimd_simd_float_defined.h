@@ -1,7 +1,7 @@
 #ifndef GMX_IMPL_NSIMD_FLOAT_DEFINED_H
 #define GMX_IMPL_NSIMD_FLOAT_DEFINED_H
 
-
+ 
 #include <nsimd/cxx_adv_api.hpp>
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>

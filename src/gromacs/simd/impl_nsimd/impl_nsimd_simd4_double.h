@@ -263,33 +263,36 @@ trunc(Simd4Double x)
 static inline Simd4DBool gmx_simdcall
 operator==(Simd4Double a, Simd4Double b)
 {
+    double x = 0xFFFFFFFF;
     return {
-               a.simdInternal_ == b.simdInternal_
-            // nsimd::eq(a.simdInternal_, b.simdInternal_)
+               nsimd::if_else1(a.simdInternal_== b.simdInternal_, nsimd::set1<nsimd::pack<double>>(x), nsimd::set1<nsimd::pack<double>>(0.0))
     };
 }
 
 static inline Simd4DBool gmx_simdcall
 operator!=(Simd4Double a, Simd4Double b)
 {
+    double x = 0xFFFFFFFF;
     return {
-               a.simdInternal_ != b.simdInternal_
+               nsimd::if_else1(a.simdInternal_!= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(x), nsimd::set1<nsimd::pack<double>>(0.0))
     };
 }
 
 static inline Simd4DBool gmx_simdcall
 operator<(Simd4Double a, Simd4Double b)
 {
+    double x = 0xFFFFFFFF;
     return {
-               a.simdInternal_ < b.simdInternal_
+               nsimd::if_else1(a.simdInternal_< b.simdInternal_, nsimd::set1<nsimd::pack<double>>(x), nsimd::set1<nsimd::pack<double>>(0.0))
     };
 }
 
 static inline Simd4DBool gmx_simdcall
 operator<=(Simd4Double a, Simd4Double b)
 {
+    double x = 0xFFFFFFFF;
     return {
-               a.simdInternal_ <= b.simdInternal_
+               nsimd::if_else1(a.simdInternal_<= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(x), nsimd::set1<nsimd::pack<double>>(0.0))
     };
 }
 
@@ -297,7 +300,7 @@ static inline Simd4DBool gmx_simdcall
 operator&&(Simd4DBool a, Simd4DBool b)
 {
     return {
-               a.simdInternal_ & b.simdInternal_
+               a.simdInternal_ && b.simdInternal_
     };
 }
 
@@ -305,7 +308,7 @@ static inline Simd4DBool gmx_simdcall
 operator||(Simd4DBool a, Simd4DBool b)
 {
     return {
-               a.simdInternal_ | b.simdInternal_
+               a.simdInternal_ || b.simdInternal_
     };
 }
 

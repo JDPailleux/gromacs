@@ -208,7 +208,7 @@ cvtR2I(SimdDouble a)
                _mm256_cvtpd_epi32(a.simdInternal_.native_register())
     };
 }
-
+ 
 static inline SimdDInt32 gmx_simdcall
 cvttR2I(SimdDouble a)
 {

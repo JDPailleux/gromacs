@@ -38,9 +38,15 @@
 
 #include "config.h"
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+
 #include <nsimd/cxx_adv_api.hpp>
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
+
+#include "gromacs/utility/basedefinitions.h"
 
 #include "impl_nsimd_simd_float.h"
 

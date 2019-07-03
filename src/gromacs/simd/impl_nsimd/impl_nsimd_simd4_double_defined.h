@@ -1,7 +1,11 @@
 
-
+ 
 #ifndef GMX_SIMD_IMPL_NSIMD_SIMD4_FLOAT_DEFINED_H
 #define GMX_SIMD_IMPL_NSIMD_SIMD4_FLOAT_DEFINED_H
+
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 
 #include <nsimd/cxx_adv_api.hpp>
 #include <nsimd/cxx_adv_api_functions.hpp>
