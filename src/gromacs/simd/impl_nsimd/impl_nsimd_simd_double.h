@@ -258,7 +258,7 @@ static inline SimdDouble gmx_simdcall
 maskAdd(SimdDouble a, SimdDouble b, SimdDBool m)
 {
     return {
-               (a.simdInternal_ + b.simdInternal_) & m.simdInternal_
+               a.simdInternal_ + (b.simdInternal_ & m.simdInternal_)
     };
 }
 
@@ -274,7 +274,7 @@ static inline SimdDouble
 maskzFma(SimdDouble a, SimdDouble b, SimdDouble c, SimdDBool m)
 {
     return {
-               ((a.simdInternal_ * b.simdInternal_) + c.simdInternal_) & m.simdInternal_
+               nsimd::fma(a.simdInternal_, b.simdInternal_, c.simdInternal_) & m.simdInternal_
     };
 }
 
@@ -282,7 +282,7 @@ static inline SimdDouble
 maskzRsqrt(SimdDouble x, SimdDBool m)
 {
 #ifndef NDEBUG
-    x.simdInternal_ = nsimd::if_else(nsimd::set1<nsimd::pack<double> >(1.), x.simdInternal_, m.simdInternal_);
+    x.simdInternal_ = nsimd::if_else1(nsimd::cvt<nsimd::packl<double>>(m.simdInternal_), x.simdInternal_, nsimd::set1<nsimd::pack<double> >(1.));
 #endif
     return {
                nsimd::rsqrt11(x.simdInternal_) & m.simdInternal_
@@ -293,7 +293,7 @@ static inline SimdDouble
 maskzRcp(SimdDouble x, SimdDBool m)
 {
 #ifndef NDEBUG
-    x.simdInternal_ = nsimd::if_else(nsimd::set1<nsimd::pack<double> >(1.), x.simdInternal_, m.simdInternal_);
+    x.simdInternal_ = nsimd::if_else1(nsimd::cvt<nsimd::packl<double>>(m.simdInternal_), x.simdInternal_, nsimd::set1<nsimd::pack<double> >(1.));
 #endif
     return {
                nsimd::rec11(x.simdInternal_) & m.simdInternal_
@@ -360,7 +360,8 @@ static inline SimdDouble gmx_simdcall
 blend(SimdDouble a, SimdDouble b, SimdDBool sel)
 {
     return {
-            nsimd::if_else1(nsimd::cvt<nsimd::packl<double> >(sel.simdInternal_), a.simdInternal_, b.simdInternal_)
+            // nsimd::if_else1(nsimd::cvt<nsimd::packl<double> >(sel.simdInternal_), a.simdInternal_, b.simdInternal_)
+            nsimd::if_else1(nsimd::cvt<nsimd::packl<double> >(sel.simdInternal_), b.simdInternal_, a.simdInternal_)
     };
 }
 

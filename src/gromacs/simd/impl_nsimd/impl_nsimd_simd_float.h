@@ -183,14 +183,6 @@ setZeroFI()
     };
 }
 
-template<int index>
-static inline std::int32_t gmx_simdcall
-extract(SimdFInt32 a)
-{
-    return nsimd::cvt<int>(nsimd::shr(a.simdInternal_, nsimd::set1<nsimd::pack<int>>(4 * index))); // ???
-}
-
-
 static inline SimdFloat gmx_simdcall
 operator&(SimdFloat a, SimdFloat b)
 {
@@ -275,7 +267,7 @@ static inline SimdFloat gmx_simdcall
 maskAdd(SimdFloat a, SimdFloat b, SimdFBool m)
 {
     return {
-               (a.simdInternal_ + b.simdInternal_) & m.simdInternal_
+               a.simdInternal_ + (b.simdInternal_ & m.simdInternal_)
     };
 }
 
@@ -291,32 +283,33 @@ static inline SimdFloat gmx_simdcall
 maskzFma(SimdFloat a, SimdFloat b, SimdFloat c, SimdFBool m)
 {
     return {
-               ((a.simdInternal_ * b.simdInternal_) + c.simdInternal_) & m.simdInternal_
+               nsimd::fma(a.simdInternal_, b.simdInternal_, c.simdInternal_) & m.simdInternal_
     };
 }
 
-static inline SimdFloat gmx_simdcall
+static inline SimdFloat
 maskzRsqrt(SimdFloat x, SimdFBool m)
 {
 #ifndef NDEBUG
-    x.simdInternal_ = nsimd::andnotb(m.simdInternal_, nsimd::set1<nsimd::pack<float> >(1.F)) | m.simdInternal_ & x.simdInternal_;
+    x.simdInternal_ = nsimd::if_else1(nsimd::cvt<nsimd::packl<float>>(m.simdInternal_), x.simdInternal_, nsimd::set1<nsimd::pack<float> >(1.));
+
 #endif
     return {
                nsimd::rsqrt11(x.simdInternal_) & m.simdInternal_
     };
 }
 
-static inline SimdFloat gmx_simdcall
+static inline SimdFloat
 maskzRcp(SimdFloat x, SimdFBool m)
 {
 #ifndef NDEBUG
-    x.simdInternal_ = nsimd::andnotb(m.simdInternal_, nsimd::set1<nsimd::pack<float> >(1.F)) | m.simdInternal_ & x.simdInternal_;
+    x.simdInternal_ = nsimd::if_else1(nsimd::cvt<nsimd::packl<float>>(m.simdInternal_), x.simdInternal_, nsimd::set1<nsimd::pack<double> >(1.));
+
 #endif
     return {
                nsimd::rec11(x.simdInternal_) & m.simdInternal_
     };
 }
-
 
 static inline SimdFloat gmx_simdcall
 abs(SimdFloat x)
@@ -507,6 +500,8 @@ operator==(SimdFInt32 a, SimdFInt32 b)
 static inline SimdFIBool gmx_simdcall
 testBits(SimdFInt32 a)
 {
+    // nsimd::pack<int> eq1 = nsimd::if_else1(nsimd::eq(a.simdInternal_, nsimd::set1<nsimd::pack<int> >(0)), nsimd::set1<nsimd::pack<int>>(0x7FFFFFFF), nsimd::set1<nsimd::pack<int>>(0))
+
     nsimd::packl<int> res = 
             nsimd::andnotl(nsimd::eq(a.simdInternal_, nsimd::set1<nsimd::pack<int> >(0)), nsimd::eq(a.simdInternal_, a.simdInternal_));
 
@@ -554,7 +549,7 @@ static inline SimdFloat gmx_simdcall
 selectByNotMask(SimdFloat a, SimdFBool mask)
 {
     return {
-               nsimd::andnotb(mask.simdInternal_, a.simdInternal_)
+               nsimd::andnotb(a.simdInternal_, mask.simdInternal_)
     };
 }
 
@@ -562,7 +557,8 @@ static inline SimdFloat gmx_simdcall
 blend(SimdFloat a, SimdFloat b, SimdFBool sel)
 {
     return {
-               nsimd::if_else1(nsimd::cvt<nsimd::packl<float>>(sel.simdInternal_), a.simdInternal_, b.simdInternal_)
+            //    nsimd::if_else1(nsimd::cvt<nsimd::packl<float>>(sel.simdInternal_), a.simdInternal_, b.simdInternal_)
+            nsimd::if_else1(nsimd::cvt<nsimd::packl<float>>(sel.simdInternal_), b.simdInternal_, a.simdInternal_)
     };
 }
 
@@ -621,20 +617,10 @@ static inline SimdFInt32 gmx_simdcall
 blend(SimdFInt32 a, SimdFInt32 b, SimdFIBool sel)
 {
     return {
-            //    nsimd::if_else1(a.simdInternal_, b.simdInternal_, nsimd::cvt<nsimd::packl<int> >(sel.simdInternal_))
-            nsimd::if_else1(nsimd::cvt<nsimd::packl<int> >(sel.simdInternal_), a.simdInternal_, b.simdInternal_)
+            // nsimd::if_else1(nsimd::cvt<nsimd::packl<int> >(sel.simdInternal_), a.simdInternal_, b.simdInternal_)
+            nsimd::if_else1(nsimd::cvt<nsimd::packl<int> >(sel.simdInternal_), b.simdInternal_, a.simdInternal_)
     };
 }
-
-// static inline SimdFInt32 gmx_simdcall
-// cvttR2I(SimdFloat a)
-// {
-//     return {
-//             //    _mm_cvttps_epi32(a.simdInternal_)
-//             nsimd::cvt<nsimd::pack<int> >(nsimd::trunc(a)) // Solution in NSIMD ? 
-//     };
-// }
-
 
 static inline SimdFIBool gmx_simdcall
 cvtB2IB(SimdFBool a)

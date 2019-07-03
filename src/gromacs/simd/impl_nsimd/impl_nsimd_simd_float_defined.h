@@ -1,13 +1,11 @@
 #ifndef GMX_IMPL_NSIMD_FLOAT_DEFINED_H
 #define GMX_IMPL_NSIMD_FLOAT_DEFINED_H
-
  
 #include <nsimd/cxx_adv_api.hpp>
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
 
 #include "impl_nsimd_simd_float.h"
-#include "gromacs/math/utilities.h"
 
 #if (defined(NSIMD_AVX2) || defined(NSIMD_AVX))
 
@@ -67,6 +65,13 @@ ldexp(SimdFloat value, SimdFInt32 exponent)
     };
 }
 
+template<int index>
+static inline std::int32_t gmx_simdcall
+extract(SimdFInt32 a)
+{
+    return _mm_extract_epi32(_mm256_extractf128_si256(a.simdInternal_.native_register(), index>>2), index & 0x3);
+}
+
 static inline float gmx_simdcall
 reduce(SimdFloat a)
 {
@@ -84,6 +89,17 @@ cvttR2I(SimdFloat a)
                _mm256_cvttps_epi32(a.simdInternal_.native_register())
     };
 }
+
+
+// static inline SimdFIBool gmx_simdcall
+// testBits(SimdFInt32 a)
+// {
+//     return {
+//                _mm256_andnot_si256(_mm256_cmpeq_epi32(a.simdInternal_.native_register(), _mm256_setzero_si256()),
+//                                    _mm256_cmpeq_epi32(a.simdInternal_.native_register(), a.simdInternal_.native_register()))
+//     };
+// }
+
 
 #endif
 

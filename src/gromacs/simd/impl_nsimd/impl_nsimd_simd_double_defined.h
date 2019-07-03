@@ -5,7 +5,6 @@
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
 
-#include "gromacs/math/utilities.h"
 
 #if (defined(NSIMD_AVX2) || defined(NSIMD_AVX))
 class SimdDInt32 // Original class because simdInternal_ is in an invalid register
