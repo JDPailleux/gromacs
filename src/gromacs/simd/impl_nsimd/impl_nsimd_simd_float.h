@@ -37,6 +37,7 @@
 #define GMX_SIMD_IMPL_NSIMD_SIMD_FLOAT_H
 
 #include "config.h"
+#include "float.h"
 
 #include <cassert>
 #include <cstddef>
@@ -195,7 +196,7 @@ static inline SimdFloat gmx_simdcall
 andNot(SimdFloat a, SimdFloat b)
 {
     return {
-               nsimd::andnotb(a.simdInternal_, b.simdInternal_)
+               nsimd::andnotb(b.simdInternal_, a.simdInternal_)
     };
 }
 
@@ -292,7 +293,6 @@ maskzRsqrt(SimdFloat x, SimdFBool m)
 {
 #ifndef NDEBUG
     x.simdInternal_ = nsimd::if_else1(nsimd::cvt<nsimd::packl<float>>(m.simdInternal_), x.simdInternal_, nsimd::set1<nsimd::pack<float> >(1.));
-
 #endif
     return {
                nsimd::rsqrt11(x.simdInternal_) & m.simdInternal_
@@ -304,7 +304,6 @@ maskzRcp(SimdFloat x, SimdFBool m)
 {
 #ifndef NDEBUG
     x.simdInternal_ = nsimd::if_else1(nsimd::cvt<nsimd::packl<float>>(m.simdInternal_), x.simdInternal_, nsimd::set1<nsimd::pack<double> >(1.));
-
 #endif
     return {
                nsimd::rec11(x.simdInternal_) & m.simdInternal_
@@ -388,48 +387,43 @@ static inline SimdFBool gmx_simdcall
 testBits(SimdFloat a)
 {
     nsimd::pack<int> ia = nsimd::reinterpret<nsimd::pack<int> >(a.simdInternal_);
-    nsimd::packl<int> res = nsimd::andnotl(nsimd::eq(ia, nsimd::set1<nsimd::pack<int> >(0)), nsimd::eq(ia, ia));
+    nsimd::packl<int> res = nsimd::andnotl(nsimd::eq(ia, ia), nsimd::eq(ia, nsimd::set1<nsimd::pack<int> >(0)));
     nsimd::pack<int> res2 = nsimd::if_else1(res,nsimd::set1<nsimd::pack<int>>(0x7FFFFFFF), nsimd::set1<nsimd::pack<int>>(0));
 
     return {
                nsimd::reinterpret<nsimd::pack<float> >(res2)
-               
     };
 }
 
 static inline SimdFBool gmx_simdcall
 operator==(SimdFloat a, SimdFloat b)
 {
-    float x = 0xFFFFFFFF;
     return {
-               nsimd::if_else1(a.simdInternal_== b.simdInternal_, nsimd::set1<nsimd::pack<float>>(x), nsimd::set1<nsimd::pack<float>>(0.0f))
+               nsimd::if_else1(a.simdInternal_== b.simdInternal_, nsimd::set1<nsimd::pack<float>>(GMX_FLOAT_MAX), nsimd::set1<nsimd::pack<float>>(0.0f))
     };
 }
 
 static inline SimdFBool gmx_simdcall
 operator!=(SimdFloat a, SimdFloat b)
 {
-    float x = 0xFFFFFFFF;
     return {
-               nsimd::if_else1(a.simdInternal_!= b.simdInternal_, nsimd::set1<nsimd::pack<float>>(x), nsimd::set1<nsimd::pack<float>>(0.0f))
+               nsimd::if_else1(a.simdInternal_!= b.simdInternal_, nsimd::set1<nsimd::pack<float>>(GMX_FLOAT_MAX), nsimd::set1<nsimd::pack<float>>(0.0f))
     };
 }
 
 static inline SimdFBool gmx_simdcall
 operator<(SimdFloat a, SimdFloat b)
 {
-    float x = 0xFFFFFFFF;
     return {
-               nsimd::if_else1(a.simdInternal_< b.simdInternal_, nsimd::set1<nsimd::pack<float>>(x), nsimd::set1<nsimd::pack<float>>(0.0f))
+               nsimd::if_else1(a.simdInternal_< b.simdInternal_, nsimd::set1<nsimd::pack<float>>(GMX_FLOAT_MAX), nsimd::set1<nsimd::pack<float>>(0.0f))
     };
 }
 
 static inline SimdFBool gmx_simdcall
 operator<=(SimdFloat a, SimdFloat b)
 {
-    float x = 0xFFFFFFFF;
     return {
-               nsimd::if_else1(a.simdInternal_<= b.simdInternal_, nsimd::set1<nsimd::pack<float>>(x), nsimd::set1<nsimd::pack<float>>(0.0f))
+               nsimd::if_else1(a.simdInternal_<= b.simdInternal_, nsimd::set1<nsimd::pack<float>>(GMX_FLOAT_MAX), nsimd::set1<nsimd::pack<float>>(0.0f))
     };
 }
 
@@ -445,7 +439,7 @@ static inline SimdFInt32 gmx_simdcall
 andNot(SimdFInt32 a, SimdFInt32 b)
 {
     return {
-               nsimd::andnotb(a.simdInternal_, b.simdInternal_)
+               nsimd::andnotb(b.simdInternal_, a.simdInternal_)
     };
 }
 
@@ -500,10 +494,8 @@ operator==(SimdFInt32 a, SimdFInt32 b)
 static inline SimdFIBool gmx_simdcall
 testBits(SimdFInt32 a)
 {
-    // nsimd::pack<int> eq1 = nsimd::if_else1(nsimd::eq(a.simdInternal_, nsimd::set1<nsimd::pack<int> >(0)), nsimd::set1<nsimd::pack<int>>(0x7FFFFFFF), nsimd::set1<nsimd::pack<int>>(0))
-
     nsimd::packl<int> res = 
-            nsimd::andnotl(nsimd::eq(a.simdInternal_, nsimd::set1<nsimd::pack<int> >(0)), nsimd::eq(a.simdInternal_, a.simdInternal_));
+            nsimd::andnotl(nsimd::eq(a.simdInternal_, a.simdInternal_), nsimd::eq(a.simdInternal_, nsimd::set1<nsimd::pack<int> >(0)));
 
     return {
             nsimd::if_else1(res, nsimd::set1<nsimd::pack<int>>(0x7FFFFFFF), nsimd::set1<nsimd::pack<int>>(0))
@@ -541,7 +533,7 @@ static inline SimdFloat gmx_simdcall
 selectByMask(SimdFloat a, SimdFBool mask)
 {
     return {
-               a.simdInternal_ & mask.simdInternal_
+              mask.simdInternal_ &  a.simdInternal_
     };
 }
 
@@ -549,7 +541,7 @@ static inline SimdFloat gmx_simdcall
 selectByNotMask(SimdFloat a, SimdFBool mask)
 {
     return {
-               nsimd::andnotb(a.simdInternal_, mask.simdInternal_)
+               nsimd::andnotb(a.simdInternal_,mask.simdInternal_)
     };
 }
 
@@ -557,7 +549,6 @@ static inline SimdFloat gmx_simdcall
 blend(SimdFloat a, SimdFloat b, SimdFBool sel)
 {
     return {
-            //    nsimd::if_else1(nsimd::cvt<nsimd::packl<float>>(sel.simdInternal_), a.simdInternal_, b.simdInternal_)
             nsimd::if_else1(nsimd::cvt<nsimd::packl<float>>(sel.simdInternal_), b.simdInternal_, a.simdInternal_)
     };
 }
@@ -609,7 +600,7 @@ static inline SimdFInt32 gmx_simdcall
 selectByNotMask(SimdFInt32 a, SimdFIBool mask)
 {
     return {
-               nsimd::andnotb(mask.simdInternal_, a.simdInternal_)
+               nsimd::andnotb(a.simdInternal_, mask.simdInternal_)
     };
 }
 
@@ -617,7 +608,6 @@ static inline SimdFInt32 gmx_simdcall
 blend(SimdFInt32 a, SimdFInt32 b, SimdFIBool sel)
 {
     return {
-            // nsimd::if_else1(nsimd::cvt<nsimd::packl<int> >(sel.simdInternal_), a.simdInternal_, b.simdInternal_)
             nsimd::if_else1(nsimd::cvt<nsimd::packl<int> >(sel.simdInternal_), b.simdInternal_, a.simdInternal_)
     };
 }

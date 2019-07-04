@@ -37,6 +37,7 @@
 #define GMX_SIMD_IMPL_NSIMD_SIMD_DOUBLE_H
 
 #include "config.h"
+#include "float.h"
 
 #include <cassert>
 #include <cstddef>
@@ -137,36 +138,32 @@ operator||(SimdDBool a, SimdDBool b)
 static inline SimdDBool gmx_simdcall
 operator==(SimdDouble a, SimdDouble b)
 {
-    double x = 0xFFFFFFFF;
     return {
-               nsimd::if_else1(a.simdInternal_== b.simdInternal_, nsimd::set1<nsimd::pack<double>>(x), nsimd::set1<nsimd::pack<double>>(0.0))
+               nsimd::if_else1(a.simdInternal_== b.simdInternal_, nsimd::set1<nsimd::pack<double>>(DBL_MAX), nsimd::set1<nsimd::pack<double>>(0.0))
     };
 }
 
 static inline SimdDBool gmx_simdcall
 operator!=(SimdDouble a, SimdDouble b)
 {
-    double x = 0xFFFFFFFF;
     return {
-               nsimd::if_else1(a.simdInternal_!= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(x), nsimd::set1<nsimd::pack<double>>(0.0))
+               nsimd::if_else1(a.simdInternal_!= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(DBL_MAX), nsimd::set1<nsimd::pack<double>>(0.0))
     };
 }
 
 static inline SimdDBool gmx_simdcall
 operator<(SimdDouble a, SimdDouble b)
 {
-    double x = 0xFFFFFFFF;
     return {
-               nsimd::if_else1(a.simdInternal_< b.simdInternal_, nsimd::set1<nsimd::pack<double>>(x), nsimd::set1<nsimd::pack<double>>(0.0))
+               nsimd::if_else1(a.simdInternal_< b.simdInternal_, nsimd::set1<nsimd::pack<double>>(DBL_MAX), nsimd::set1<nsimd::pack<double>>(0.0))
     };
 }
 
 static inline SimdDBool gmx_simdcall
 operator<=(SimdDouble a, SimdDouble b)
 {
-    double x = 0xFFFFFFFF;
     return {
-               nsimd::if_else1(a.simdInternal_<= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(x), nsimd::set1<nsimd::pack<double>>(0.0))
+               nsimd::if_else1(a.simdInternal_<= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(DBL_MAX), nsimd::set1<nsimd::pack<double>>(0.0))
     };
 }
 
@@ -183,7 +180,7 @@ static inline SimdDouble gmx_simdcall
 andNot(SimdDouble a, SimdDouble b)
 {
     return {
-               nsimd::andnotb(a.simdInternal_, b.simdInternal_)
+               nsimd::andnotb(b.simdInternal_, a.simdInternal_)
     };
 }
 
@@ -352,7 +349,7 @@ static inline SimdDouble gmx_simdcall
 selectByNotMask(SimdDouble a, SimdDBool mask)
 {
     return {
-               nsimd::andnotb(mask.simdInternal_, a.simdInternal_)
+               nsimd::andnotb(a.simdInternal_, mask.simdInternal_)
     };
 }
 
