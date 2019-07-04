@@ -135,37 +135,37 @@ operator||(SimdDBool a, SimdDBool b)
 }
 
 
-static inline SimdDBool gmx_simdcall
-operator==(SimdDouble a, SimdDouble b)
-{
-    return {
-               nsimd::if_else1(a.simdInternal_== b.simdInternal_, nsimd::set1<nsimd::pack<double>>(DBL_MAX), nsimd::set1<nsimd::pack<double>>(0.0))
-    };
-}
+// static inline SimdDBool gmx_simdcall
+// operator==(SimdDouble a, SimdDouble b)
+// {
+//     return {
+//                nsimd::if_else1(a.simdInternal_== b.simdInternal_, nsimd::set1<nsimd::pack<double>>(GMX_DOUBLE_MAX), nsimd::set1<nsimd::pack<double>>(0.0))
+//     };
+// }
 
-static inline SimdDBool gmx_simdcall
-operator!=(SimdDouble a, SimdDouble b)
-{
-    return {
-               nsimd::if_else1(a.simdInternal_!= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(DBL_MAX), nsimd::set1<nsimd::pack<double>>(0.0))
-    };
-}
+// static inline SimdDBool gmx_simdcall
+// operator!=(SimdDouble a, SimdDouble b)
+// {
+//     return {
+//                nsimd::if_else1(a.simdInternal_!= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(GMX_DOUBLE_MAX), nsimd::set1<nsimd::pack<double>>(0.0))
+//     };
+// }
 
-static inline SimdDBool gmx_simdcall
-operator<(SimdDouble a, SimdDouble b)
-{
-    return {
-               nsimd::if_else1(a.simdInternal_< b.simdInternal_, nsimd::set1<nsimd::pack<double>>(DBL_MAX), nsimd::set1<nsimd::pack<double>>(0.0))
-    };
-}
+// static inline SimdDBool gmx_simdcall
+// operator<(SimdDouble a, SimdDouble b)
+// {
+//     return {
+//                nsimd::if_else1(a.simdInternal_< b.simdInternal_, nsimd::set1<nsimd::pack<double>>(GMX_DOUBLE_MAX), nsimd::set1<nsimd::pack<double>>(0.0))
+//     };
+// }
 
-static inline SimdDBool gmx_simdcall
-operator<=(SimdDouble a, SimdDouble b)
-{
-    return {
-               nsimd::if_else1(a.simdInternal_<= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(DBL_MAX), nsimd::set1<nsimd::pack<double>>(0.0))
-    };
-}
+// static inline SimdDBool gmx_simdcall
+// operator<=(SimdDouble a, SimdDouble b)
+// {
+//     return {
+//                nsimd::if_else1(a.simdInternal_<= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(GMX_DOUBLE_MAX), nsimd::set1<nsimd::pack<double>>(0.0))
+//     };
+// }
 
 
 static inline SimdDouble gmx_simdcall

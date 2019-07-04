@@ -90,16 +90,38 @@ cvttR2I(SimdFloat a)
     };
 }
 
+static inline SimdFBool gmx_simdcall
+operator<(SimdFloat a, SimdFloat b)
+{
+    return {
+               _mm256_cmp_ps(a.simdInternal_.native_register(), b.simdInternal_.native_register(), _CMP_LT_OQ)
+    };
+}
 
-// static inline SimdFIBool gmx_simdcall
-// testBits(SimdFInt32 a)
-// {
-//     return {
-//                _mm256_andnot_si256(_mm256_cmpeq_epi32(a.simdInternal_.native_register(), _mm256_setzero_si256()),
-//                                    _mm256_cmpeq_epi32(a.simdInternal_.native_register(), a.simdInternal_.native_register()))
-//     };
-// }
 
+static inline SimdFBool gmx_simdcall
+operator!=(SimdFloat a, SimdFloat b)
+{
+    return {
+               _mm256_cmp_ps(a.simdInternal_.native_register(), b.simdInternal_.native_register(), _CMP_NEQ_OQ)
+    };
+}
+
+static inline SimdFBool gmx_simdcall
+operator==(SimdFloat a, SimdFloat b)
+{
+    return {
+               _mm256_cmp_ps(a.simdInternal_.native_register(), b.simdInternal_.native_register(), _CMP_EQ_OQ)
+    };
+}
+
+static inline SimdFBool gmx_simdcall
+operator<=(SimdFloat a, SimdFloat b)
+{
+    return {
+               _mm256_cmp_ps(a.simdInternal_.native_register(), b.simdInternal_.native_register(), _CMP_LE_OQ)
+    };
+}
 
 #endif
 

@@ -40,6 +40,38 @@ transpose(Simd4Double * v0, Simd4Double * v1,
     v3->simdInternal_ = _mm256_permute2f128_pd(t2, t4, 0x31);
 }
 
+static inline Simd4DBool gmx_simdcall
+operator==(Simd4Double a, Simd4Double b)
+{
+    return {
+               _mm256_cmp_pd(a.simdInternal_.native_register(), b.simdInternal_.native_register(), _CMP_EQ_OQ)
+    };
+}
+
+static inline Simd4DBool gmx_simdcall
+operator!=(Simd4Double a, Simd4Double b)
+{
+    return {
+               _mm256_cmp_pd(a.simdInternal_.native_register(), b.simdInternal_.native_register(), _CMP_NEQ_OQ)
+    };
+}
+
+static inline Simd4DBool gmx_simdcall
+operator<(Simd4Double a, Simd4Double b)
+{
+    return {
+               _mm256_cmp_pd(a.simdInternal_.native_register(), b.simdInternal_.native_register(), _CMP_LT_OQ)
+    };
+}
+
+static inline Simd4DBool gmx_simdcall
+operator<=(Simd4Double a, Simd4Double b)
+{
+    return {
+               _mm256_cmp_pd(a.simdInternal_.native_register(), b.simdInternal_.native_register(), _CMP_LE_OQ)
+    };
+}
+
 #else
 
 #endif

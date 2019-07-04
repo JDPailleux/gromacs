@@ -316,6 +316,38 @@ ldexp(SimdDouble value, SimdDInt32 exponent)
     };
 }
 
+static inline SimdDBool gmx_simdcall
+operator==(SimdDouble a, SimdDouble b)
+{
+    return {
+               _mm256_cmp_pd(a.simdInternal_.native_register(), b.simdInternal_.native_register(), _CMP_EQ_OQ)
+    };
+}
+
+static inline SimdDBool gmx_simdcall
+operator!=(SimdDouble a, SimdDouble b)
+{
+    return {
+               _mm256_cmp_pd(a.simdInternal_.native_register(), b.simdInternal_.native_register(), _CMP_NEQ_OQ)
+    };
+}
+
+static inline SimdDBool gmx_simdcall
+operator<(SimdDouble a, SimdDouble b)
+{
+    return {
+               _mm256_cmp_pd(a.simdInternal_.native_register(), b.simdInternal_.native_register(), _CMP_LT_OQ)
+    };
+}
+
+static inline SimdDBool gmx_simdcall
+operator<=(SimdDouble a, SimdDouble b)
+{
+    return {
+               _mm256_cmp_pd(a.simdInternal_.native_register(), b.simdInternal_.native_register(), _CMP_LE_OQ)
+    };
+}
+
 #elif defined(NSIMD_AARCH64)
 
 #else
