@@ -395,37 +395,41 @@ testBits(SimdFloat a)
     };
 }
 
-// static inline SimdFBool gmx_simdcall
-// operator==(SimdFloat a, SimdFloat b)
-// {
-//     return {
-//                nsimd::if_else1(a.simdInternal_== b.simdInternal_, nsimd::set1<nsimd::pack<float>>(GMX_FLOAT_MAX), nsimd::set1<nsimd::pack<float>>(0.0f))
-//     };
-// }
+static inline SimdFBool gmx_simdcall
+operator==(SimdFloat a, SimdFloat b)
+{
+    nsimd::pack<float> ffff = nsimd::reinterpret<nsimd::pack<float>>(nsimd::set1<nsimd::pack<unsigned int>>(-1u));
+    return {
+               nsimd::if_else1(a.simdInternal_== b.simdInternal_, ffff, nsimd::set1<nsimd::pack<float>>(0.0f))
+    };
+}
 
-// static inline SimdFBool gmx_simdcall
-// operator!=(SimdFloat a, SimdFloat b)
-// {
-//     return {
-//                nsimd::if_else1(nsimd::cvt<packl<int>>(a.simdInternal_!= b.simdInternal_), nsimd::set1<nsimd::pack<float>>(GMX_FLOAT_MAX), nsimd::set1<nsimd::pack<float>>(0.0f))
-//     };
-// }
+static inline SimdFBool gmx_simdcall
+operator!=(SimdFloat a, SimdFloat b)
+{
+    nsimd::pack<float> ffff = nsimd::reinterpret<nsimd::pack<float>>(nsimd::set1<nsimd::pack<unsigned int>>(-1u));
+    return {
+               nsimd::if_else1(a.simdInternal_!= b.simdInternal_, ffff, nsimd::set1<nsimd::pack<float>>(0.0f))
+    };
+}
 
-// static inline SimdFBool gmx_simdcall
-// operator<(SimdFloat a, SimdFloat b)
-// {
-//     return {
-//                nsimd::if_else1(a.simdInternal_< b.simdInternal_, nsimd::set1<nsimd::pack<float>>(GMX_FLOAT_MAX), nsimd::set1<nsimd::pack<float>>(0.0f))
-//     };
-// }
+static inline SimdFBool gmx_simdcall
+operator<(SimdFloat a, SimdFloat b)
+{
+    nsimd::pack<float> ffff = nsimd::reinterpret<nsimd::pack<float>>(nsimd::set1<nsimd::pack<unsigned int>>(-1u));
+    return {
+               nsimd::if_else1(a.simdInternal_< b.simdInternal_, ffff, nsimd::set1<nsimd::pack<float>>(0.0f))
+    };
+}
 
-// static inline SimdFBool gmx_simdcall
-// operator<=(SimdFloat a, SimdFloat b)
-// {
-//     return {
-//                nsimd::if_else1(a.simdInternal_<= b.simdInternal_, nsimd::set1<nsimd::pack<float>>(GMX_FLOAT_MAX), nsimd::set1<nsimd::pack<float>>(0.0f))
-//     };
-// }
+static inline SimdFBool gmx_simdcall
+operator<=(SimdFloat a, SimdFloat b)
+{
+    nsimd::pack<float> ffff = nsimd::reinterpret<nsimd::pack<float>>(nsimd::set1<nsimd::pack<unsigned int>>(-1u));
+    return {
+               nsimd::if_else1(a.simdInternal_<= b.simdInternal_, ffff, nsimd::set1<nsimd::pack<float>>(0.0f))
+    };
+}
 
 static inline SimdFInt32 gmx_simdcall
 operator&(SimdFInt32 a, SimdFInt32 b)
