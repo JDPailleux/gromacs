@@ -977,6 +977,50 @@ sincos(SimdFloat x, SimdFloat *sinval, SimdFloat *cosval)
 #endif
 }
 
+
+#if GMX_SIMD_NSIMD
+
+/*! \brief SIMD float sin(x).
+ *
+ * \param x The argument to evaluate sin for
+ * \result Sin(x)
+ *
+ * \attention Do NOT call both sin & cos if you need both results, since each of them
+ * will then call \ref sincos and waste a factor 2 in performance.
+ */
+static inline SimdFloat gmx_simdcall
+sin(SimdFloat x)
+{
+    return nsimd::sin(x.simdInternal_);
+}
+
+/*! \brief SIMD float cos(x).
+ *
+ * \param x The argument to evaluate cos for
+ * \result Cos(x)
+ *
+ * \attention Do NOT call both sin & cos if you need both results, since each of them
+ * will then call \ref sincos and waste a factor 2 in performance.
+ */
+static inline SimdFloat gmx_simdcall
+cos(SimdFloat x)
+{
+    return nsimd::cos(x.simdInternal_);
+}
+
+/*! \brief SIMD float tan(x).
+ *
+ * \param x The argument to evaluate tan for
+ * \result Tan(x)
+ */
+static inline SimdFloat gmx_simdcall
+tan(SimdFloat x)
+{
+    return nsimd::tan(x.simdInternal_);
+}
+
+#else 
+
 /*! \brief SIMD float sin(x).
  *
  * \param x The argument to evaluate sin for
@@ -1081,6 +1125,7 @@ tan(SimdFloat x)
     p       = blend( p, maskzInv(p, m), m);
     return p;
 }
+#endif
 
 /*! \brief SIMD float asin(x).
  *
@@ -2385,6 +2430,49 @@ sincos(SimdDouble x, SimdDouble *sinval, SimdDouble *cosval)
 #endif
 }
 
+#if GMX_SIMD_NSIMD
+
+/*! \brief SIMD float sin(x).
+ *
+ * \param x The argument to evaluate sin for
+ * \result Sin(x)
+ *
+ * \attention Do NOT call both sin & cos if you need both results, since each of them
+ * will then call \ref sincos and waste a factor 2 in performance.
+ */
+static inline SimdDouble gmx_simdcall
+sin(SimdDouble x)
+{
+    return nsimd::sin(x.simdInternal_);
+}
+
+/*! \brief SIMD float cos(x).
+ *
+ * \param x The argument to evaluate cos for
+ * \result Cos(x)
+ *
+ * \attention Do NOT call both sin & cos if you need both results, since each of them
+ * will then call \ref sincos and waste a factor 2 in performance.
+ */
+static inline SimdDouble gmx_simdcall
+cos(SimdDouble x)
+{
+    return nsimd::cos(x.simdInternal_);
+}
+
+/*! \brief SIMD float tan(x).
+ *
+ * \param x The argument to evaluate tan for
+ * \result Tan(x)
+ */
+static inline SimdDouble gmx_simdcall
+tan(SimdDouble x)
+{
+    return nsimd::tan(x.simdInternal_);
+}
+
+#else 
+
 /*! \brief SIMD double sin(x).
  *
  * \param x The argument to evaluate sin for
@@ -2509,6 +2597,7 @@ tan(SimdDouble x)
     return p;
 }
 
+#endif
 /*! \brief SIMD double asin(x).
  *
  * \param x The argument to evaluate asin for
