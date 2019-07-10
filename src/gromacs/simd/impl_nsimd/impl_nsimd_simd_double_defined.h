@@ -5,8 +5,360 @@
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
 
+#if (defined(NSIMD_SSE2) || defined(NSIMD_SSE42))
 
-#if (defined(NSIMD_AVX2) || defined(NSIMD_AVX))
+class SimdDInt32
+{
+    public:
+        SimdDInt32() {}
+
+        SimdDInt32(std::int32_t i) : simdInternal_(nsimd::set1<nsimd::pack<int> >(i)) {}
+
+        // Internal utility constructor to simplify return statements
+        SimdDInt32(nsimd::pack<int> simd) : simdInternal_(simd) {}
+
+        nsimd::pack<int> simdInternal_;
+};
+
+class SimdDIBool
+{
+    public:
+        SimdDIBool() {}
+
+        SimdDIBool(bool b) : simdInternal_(nsimd::set1<nsimd::pack<int> >(b ? 4294967295U : 0)) {}
+
+        // Internal utility constructor to simplify return statements
+        SimdDIBool(nsimd::pack<int> simd) : simdInternal_(simd) {}
+
+        nsimd::pack<int> simdInternal_;
+};
+
+
+static inline SimdDInt32 gmx_simdcall
+simdLoad(const std::int32_t * m, SimdDInt32Tag)
+{
+    assert(std::size_t(m) % 8 == 0);
+    return {
+               _mm_loadl_epi64(reinterpret_cast<const __m128i *>(m))
+    };
+}
+
+static inline void gmx_simdcall
+store(std::int32_t * m, SimdDInt32 a)
+{
+    assert(std::size_t(m) % 8 == 0);
+    _mm_storel_epi64(reinterpret_cast<__m128i *>(m), a.simdInternal_.native_register());
+}
+
+static inline SimdDInt32 gmx_simdcall
+simdLoadU(const std::int32_t *m, SimdDInt32Tag)
+{
+    return {
+               _mm_loadl_epi64(reinterpret_cast<const __m128i *>(m))
+    };
+}
+
+static inline void gmx_simdcall
+storeU(std::int32_t * m, SimdDInt32 a)
+{
+    _mm_storel_epi64(reinterpret_cast<__m128i *>(m), a.simdInternal_.native_register());
+}
+
+static inline SimdDInt32 gmx_simdcall
+setZeroDI()
+{
+    return {
+               nsimd::set1<nsimd::pack<int> >(0)
+    };
+}
+
+template<int index>
+static inline std::int32_t gmx_simdcall
+extract(SimdDInt32 a)
+{
+    return _mm_cvtsi128_si32( _mm_srli_si128(a.simdInternal_.native_register(), 4 * index) );
+}
+
+static inline double gmx_simdcall
+reduce(SimdDouble a)
+{
+    __m128d b = _mm_add_sd(a.simdInternal_.native_register(), _mm_shuffle_pd(a.simdInternal_.native_register(), a.simdInternal_.native_register(), _MM_SHUFFLE2(1, 1)));
+    return *reinterpret_cast<double *>(&b);
+}
+
+static inline SimdDBool gmx_simdcall
+testBits(SimdDouble a)
+{
+    __m128i ia  = _mm_castpd_si128(a.simdInternal_.native_register());
+    __m128i res = _mm_andnot_si128( _mm_cmpeq_epi32(ia, _mm_setzero_si128()), _mm_cmpeq_epi32(ia, ia));
+
+    // set each 64-bit element if low or high 32-bit part is set
+    res = _mm_or_si128(res, _mm_shuffle_epi32(res, _MM_SHUFFLE(2, 3, 0, 1)));
+
+    return {
+               _mm_castsi128_pd(res)
+    };
+}
+
+static inline SimdDouble
+frexp(SimdDouble value, SimdDInt32 * exponent)
+{
+    // Don't use _mm_set1_epi64x() - on MSVC it is only supported for 64-bit builds
+    const __m128d exponentMask = _mm_castsi128_pd( _mm_set_epi32(0x7FF00000, 0x00000000, 0x7FF00000, 0x00000000) );
+    const __m128d mantissaMask = _mm_castsi128_pd( _mm_set_epi32(0x800FFFFF, 0xFFFFFFFF, 0x800FFFFF, 0xFFFFFFFF) );
+    const __m128i exponentBias = _mm_set1_epi32(1022); // add 1 to make our definition identical to frexp()
+    const __m128d half         = _mm_set1_pd(0.5);
+    __m128i       iExponent;
+
+    iExponent               = _mm_castpd_si128(_mm_and_pd(value.simdInternal_.native_register(), exponentMask));
+    iExponent               = _mm_sub_epi32(_mm_srli_epi64(iExponent, 52), exponentBias);
+    iExponent               = _mm_shuffle_epi32(iExponent, _MM_SHUFFLE(3, 1, 2, 0) );
+    exponent->simdInternal_ = iExponent;
+
+    return {
+               _mm_or_pd(_mm_and_pd(value.simdInternal_.native_register(), mantissaMask), half)
+    };
+}
+
+#if defined(NSIMD_SSE2)
+template <MathOptimization opt = MathOptimization::Safe>
+static inline SimdDouble
+ldexp(SimdDouble value, SimdDInt32 exponent)
+{
+    const __m128i  exponentBias = _mm_set1_epi32(1023);
+    __m128i        iExponent    = _mm_add_epi32(exponent.simdInternal_.native_register(), exponentBias);
+
+    if (opt == MathOptimization::Safe)
+    {
+        // Make sure biased argument is not negative
+        iExponent = _mm_and_si128(iExponent, _mm_cmpgt_epi32(iExponent, _mm_setzero_si128()));
+    }
+
+    // After conversion integers will be in slot 0,1. Move them to 0,2 so
+    // we can do a 64-bit shift and get them to the dp exponents.
+    iExponent = _mm_shuffle_epi32(iExponent, _MM_SHUFFLE(3, 1, 2, 0));
+    iExponent = _mm_slli_epi64(iExponent, 52);
+
+    return {
+               _mm_mul_pd(value.simdInternal_.native_register(), _mm_castsi128_pd(iExponent))
+    };
+}
+#else
+
+template <MathOptimization opt = MathOptimization::Safe>
+static inline SimdDouble
+ldexp(SimdDouble value, SimdDInt32 exponent)
+{
+    const __m128i  exponentBias = _mm_set1_epi32(1023);
+    __m128i        iExponent    = _mm_add_epi32(exponent.simdInternal_.native_register(), exponentBias);
+
+    if (opt == MathOptimization::Safe)
+    {
+        // Make sure biased argument is not negative
+        iExponent = _mm_max_epi32(iExponent, _mm_setzero_si128());
+    }
+
+    // After conversion integers will be in slot 0,1. Move them to 0,2 so
+    // we can do a 64-bit shift and get them to the dp exponents.
+    iExponent = _mm_shuffle_epi32(iExponent, _MM_SHUFFLE(3, 1, 2, 0));
+    iExponent = _mm_slli_epi64(iExponent, 52);
+
+    return {
+               _mm_mul_pd(value.simdInternal_.native_register(), _mm_castsi128_pd(iExponent))
+    };
+}
+
+#endif
+
+static inline SimdDInt32 gmx_simdcall
+operator&(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               a.simdInternal_ & b.simdInternal_
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+andNot(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               nsimd::andnotb(b.simdInternal_, a.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator|(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               a.simdInternal_ | b.simdInternal_
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator^(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               a.simdInternal_ ^ b.simdInternal_
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator+(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               a.simdInternal_ + b.simdInternal_
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator-(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               a.simdInternal_ - b.simdInternal_
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator*(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               a.simdInternal_ * b.simdInternal_
+    };
+}
+
+
+static inline SimdDIBool gmx_simdcall
+operator==(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               nsimd::eq(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDIBool gmx_simdcall
+testBits(SimdDInt32 a)
+{
+    __m128i x   = a.simdInternal_.native_register();
+    __m128i res = _mm_andnot_si128( _mm_cmpeq_epi32(x, _mm_setzero_si128()), _mm_cmpeq_epi32(x, x));
+
+    return {
+               res
+    };
+}
+
+static inline SimdDIBool gmx_simdcall
+operator<(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               nsimd::lt(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDIBool gmx_simdcall
+operator&&(SimdDIBool a, SimdDIBool b)
+{
+    return {
+               a.simdInternal_ & b.simdInternal_
+    };
+}
+
+static inline SimdDIBool gmx_simdcall
+operator||(SimdDIBool a, SimdDIBool b)
+{
+    return {
+               a.simdInternal_ | b.simdInternal_
+    };
+}
+
+static inline bool gmx_simdcall
+anyTrue(SimdDIBool a)
+{
+    return _mm_movemask_epi8(_mm_shuffle_epi32(a.simdInternal_.native_register(), _MM_SHUFFLE(1, 0, 1, 0))) != 0;
+}
+
+static inline SimdDInt32 gmx_simdcall
+selectByMask(SimdDInt32 a, SimdDIBool mask)
+{
+    return {
+               a.simdInternal_ & mask.simdInternal_
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+selectByNotMask(SimdDInt32 a, SimdDIBool mask)
+{
+    return {
+               nsimd::andnotb(a.simdInternal_, mask.simdInternal_)
+    };
+}
+
+// Override for SSE4.1 and higher
+#if GMX_SIMD_X86_SSE2
+static inline SimdDInt32 gmx_simdcall
+blend(SimdDInt32 a, SimdDInt32 b, SimdDIBool sel)
+{
+    return {
+               nsimd::andnotb(a.simdInternal_, sel.simdInternal_) | (sel.simdInternal_ & b.simdInternal_)
+    };
+}
+#endif
+
+static inline SimdDInt32 gmx_simdcall
+cvtR2I(SimdDouble a)
+{
+    return {
+               nsimd::cvt<nsimd::pack<int> >(a.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+cvttR2I(SimdDouble a)
+{
+    return {
+               _mm_cvttpd_epi32(a.simdInternal_.native_register())
+    };
+}
+
+static inline SimdDouble gmx_simdcall
+cvtI2R(SimdDInt32 a)
+{
+    return {
+               nsimd::cvt<nsimd::pack<double> >(a.simdInternal_)
+    };
+}
+
+static inline SimdDIBool gmx_simdcall
+cvtB2IB(SimdDBool a)
+{
+    return {
+               _mm_shuffle_epi32(a.simdInternal_.native_register()), _MM_SHUFFLE(2, 0, 2, 0))
+    };
+}
+
+static inline SimdDBool gmx_simdcall
+cvtIB2B(SimdDIBool a)
+{
+    return {
+               _mm_castsi128_pd(_mm_shuffle_epi32(a.simdInternal_.native_register(), _MM_SHUFFLE(1, 1, 0, 0)))
+    };
+}
+
+static inline void gmx_simdcall
+cvtF2DD(SimdFloat f, SimdDouble *d0, SimdDouble *d1)
+{
+    d0->simdInternal_ = _mm_cvtps_pd(f.simdInternal_.native_register());
+    d1->simdInternal_ = _mm_cvtps_pd(_mm_movehl_ps(f.simdInternal_.native_register(), f.simdInternal_.native_register()));
+}
+
+static inline SimdFloat gmx_simdcall
+cvtDD2F(SimdDouble d0, SimdDouble d1)
+{
+    return {
+              _mm_movelh_ps(_mm_cvtpd_ps(d0.simdInternal_.native_register()), _mm_cvtpd_ps(d1.simdInternal_.native_register()))
+    };
+}
+
+#elif (defined(NSIMD_AVX2) || defined(NSIMD_AVX))
 class SimdDInt32 // Original class because simdInternal_ is in an invalid register
 {
     public:
@@ -191,6 +543,22 @@ operator<(SimdDInt32 a, SimdDInt32 b)
     };
 }
 
+static inline SimdDIBool gmx_simdcall
+operator&&(SimdDIBool a, SimdDIBool b)
+{
+    return {
+               _mm_and_si128(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDIBool gmx_simdcall
+operator||(SimdDIBool a, SimdDIBool b)
+{
+    return {
+               _mm_or_si128(a.simdInternal_, b.simdInternal_)
+    };
+}
+
 static inline SimdDInt32 gmx_simdcall
 blend(SimdDInt32 a, SimdDInt32 b, SimdDIBool sel)
 {
@@ -348,10 +716,607 @@ operator<=(SimdDouble a, SimdDouble b)
     };
 }
 
+static inline SimdDInt32 gmx_simdcall
+selectByMask(SimdDInt32 a, SimdDIBool mask)
+{
+    return {
+               _mm_and_si128(a.simdInternal_, mask.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+selectByNotMask(SimdDInt32 a, SimdDIBool mask)
+{
+    return {
+               _mm_andnot_si128(mask.simdInternal_, a.simdInternal_)
+    };
+}
+
+#elif (defined(NSIMD_AVX512_KNL) || defined(NSIMD_AVX512_SKYLAKE))
+
+
+static inline SimdDInt32 gmx_simdcall
+simdLoad(const std::int32_t * m, SimdDInt32Tag)
+{
+    assert(std::size_t(m) % 32 == 0);
+    return {
+               _mm256_load_si256(reinterpret_cast<const __m256i *>(m))
+    };
+}
+
+static inline void gmx_simdcall
+store(std::int32_t * m, SimdDInt32 a)
+{
+    assert(std::size_t(m) % 32 == 0);
+    _mm256_store_si256(reinterpret_cast<__m256i *>(m), a.simdInternal_);
+}
+
+static inline SimdDInt32 gmx_simdcall
+simdLoadU(const std::int32_t *m, SimdDInt32Tag)
+{
+    return {
+               _mm256_loadu_si256(reinterpret_cast<const __m256i *>(m))
+    };
+}
+
+static inline void gmx_simdcall
+storeU(std::int32_t * m, SimdDInt32 a)
+{
+    _mm256_storeu_si256(reinterpret_cast<__m256i *>(m), a.simdInternal_);
+}
+
+static inline SimdDInt32 gmx_simdcall
+setZeroDI()
+{
+    return {
+               _mm256_setzero_si256()
+    };
+}
+
+static inline double gmx_simdcall
+reduce(SimdDouble a)
+{
+    __m512d x = a.simdInternal_.native_register();
+    x = _mm512_add_pd(x, _mm512_shuffle_f64x2(x, x, 0xEE));
+    x = _mm512_add_pd(x, _mm512_shuffle_f64x2(x, x, 0x11));
+    x = _mm512_add_pd(x, _mm512_permute_pd(x, 0x01));
+    return *reinterpret_cast<double *>(&x);
+}
+
+static inline SimdDBool gmx_simdcall
+testBits(SimdDouble a)
+{
+    return {
+               _mm512_test_epi64_mask(_mm512_castpd_si512(a.simdInternal_.native_register()), _mm512_castpd_si512(a.simdInternal_.native_register()))
+    };
+}
+
+static inline SimdDIBool gmx_simdcall
+testBits(SimdDInt32 a)
+{
+    return {
+               _mm512_mask_test_epi32_mask(avx512Int2Mask(0xFF), _mm512_castsi256_si512(a.simdInternal_), _mm512_castsi256_si512(a.simdInternal_))
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator&(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               _mm256_and_si256(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+andNot(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               _mm256_andnot_si256(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator|(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               _mm256_or_si256(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator^(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               _mm256_xor_si256(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator+(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               _mm256_add_epi32(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator-(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               _mm256_sub_epi32(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator*(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               _mm256_mullo_epi32(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDIBool gmx_simdcall
+operator==(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               _mm512_mask_cmp_epi32_mask(avx512Int2Mask(0xFF), _mm512_castsi256_si512(a.simdInternal_), _mm512_castsi256_si512(b.simdInternal_), _MM_CMPINT_EQ)
+    };
+}
+
+static inline SimdDIBool gmx_simdcall
+operator<(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               _mm512_mask_cmp_epi32_mask(avx512Int2Mask(0xFF), _mm512_castsi256_si512(a.simdInternal_), _mm512_castsi256_si512(b.simdInternal_), _MM_CMPINT_LT)
+    };
+}
+
+static inline SimdDIBool gmx_simdcall
+operator&&(SimdDIBool a, SimdDIBool b)
+{
+    return {
+               _mm512_kand(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDIBool gmx_simdcall
+operator||(SimdDIBool a, SimdDIBool b)
+{
+    return {
+               _mm512_kor(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline bool gmx_simdcall
+anyTrue(SimdDIBool a)
+{
+    return ( avx512Mask2Int(a.simdInternal_) & 0xFF) != 0;
+}
+
+static inline SimdDBool gmx_simdcall
+operator==(SimdDouble a, SimdDouble b)
+{
+    return {
+               _mm512_cmp_pd_mask(a.simdInternal_.native_register(), b.simdInternal_.native_register(), _CMP_EQ_OQ)
+    };
+}
+
+static inline SimdDBool gmx_simdcall
+operator!=(SimdDouble a, SimdDouble b)
+{
+    return {
+               _mm512_cmp_pd_mask(a.simdInternal_.native_register(), b.simdInternal_.native_register(), _CMP_NEQ_OQ)
+    };
+}
+
+static inline SimdDBool gmx_simdcall
+operator<(SimdDouble a, SimdDouble b)
+{
+    return {
+               _mm512_cmp_pd_mask(a.simdInternal_.native_register(), b.simdInternal_.native_register(), _CMP_LT_OQ)
+    };
+}
+
+static inline SimdDBool gmx_simdcall
+operator<=(SimdDouble a, SimdDouble b)
+{
+    return {
+               _mm512_cmp_pd_mask(a.simdInternal_.native_register(), b.simdInternal_.native_register(), _CMP_LE_OQ)
+    };
+}
+
+static inline SimdDouble gmx_simdcall
+selectByMask(SimdDouble a, SimdDBool m)
+{
+    return {
+               _mm512_mask_mov_pd(_mm512_setzero_pd(), m.simdInternal_.native_register(), a.simdInternal_.native_register())
+    };
+}
+
+static inline SimdDouble gmx_simdcall
+selectByNotMask(SimdDouble a, SimdDBool m)
+{
+    return {
+               _mm512_mask_mov_pd(a.simdInternal_.native_register(), m.simdInternal_.native_register(), _mm512_setzero_pd())
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+blend(SimdDInt32 a, SimdDInt32 b, SimdDIBool sel)
+{
+    return {
+               _mm512_castsi512_si256(_mm512_mask_blend_epi32(sel.simdInternal_, _mm512_castsi256_si512(a.simdInternal_), _mm512_castsi256_si512(b.simdInternal_)))
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+cvtR2I(SimdDouble a)
+{
+    return {
+               _mm512_cvtpd_epi32(a.simdInternal_.native_register())
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+cvttR2I(SimdDouble a)
+{
+    return {
+               _mm512_cvttpd_epi32(a.simdInternal_.native_register())
+    };
+}
+
+static inline SimdDouble gmx_simdcall
+cvtI2R(SimdDInt32 a)
+{
+    return {
+               _mm512_cvtepi32_pd(a.simdInternal_)
+    };
+}
+
+static inline SimdDIBool gmx_simdcall
+cvtB2IB(SimdDBool a)
+{
+    return {
+               a.simdInternal_.native_register()
+    };
+}
+
+static inline SimdDBool gmx_simdcall
+cvtIB2B(SimdDIBool a)
+{
+    return {
+               static_cast<__mmask8>(a.simdInternal_)
+    };
+}
+
+static inline void gmx_simdcall
+cvtF2DD(SimdFloat f, SimdDouble *d0, SimdDouble *d1)
+{
+    d0->simdInternal_ = _mm512_cvtps_pd(_mm512_castps512_ps256(f.simdInternal_.native_register()));
+    d1->simdInternal_ = _mm512_cvtps_pd(_mm512_castps512_ps256(_mm512_shuffle_f32x4(f.simdInternal_.native_register(), f.simdInternal_.native_register(), 0xEE)));
+}
+
+static inline SimdFloat gmx_simdcall
+cvtDD2F(SimdDouble d0, SimdDouble d1)
+{
+    __m512 f0 = _mm512_castps256_ps512(_mm512_cvtpd_ps(d0.simdInternal_.native_register()));
+    __m512 f1 = _mm512_castps256_ps512(_mm512_cvtpd_ps(d1.simdInternal_.native_register()));
+    return {
+               _mm512_shuffle_f32x4(f0, f1, 0x44)
+    };
+}
+
 #elif defined(NSIMD_AARCH64)
 
-#else
+class SimdDInt32
+{
+    public:
+        SimdDInt32() {}
 
+        SimdDInt32(std::int32_t i) : simdInternal_(vdup_n_s32(i)) {}
+
+        // Internal utility constructor to simplify return statements
+        SimdDInt32(int32x2_t simd) : simdInternal_(simd) {}
+
+        int32x2_t  simdInternal_;
+};
+
+class SimdDIBool
+{
+    public:
+        SimdDIBool() {}
+
+        SimdDIBool(bool b) : simdInternal_(vdup_n_u32( b ? 0xFFFFFFFF : 0)) {}
+
+        // Internal utility constructor to simplify return statements
+        SimdDIBool(uint32x2_t simd) : simdInternal_(simd) {}
+
+        uint32x2_t  simdInternal_;
+};
+
+static inline SimdDInt32 gmx_simdcall
+simdLoad(const std::int32_t * m, SimdDInt32Tag)
+{
+    assert(std::size_t(m) % 8 == 0);
+    return {
+               vld1_s32(m)
+    };
+}
+
+static inline void gmx_simdcall
+store(std::int32_t * m, SimdDInt32 a)
+{
+    assert(std::size_t(m) % 8 == 0);
+    vst1_s32(m, a.simdInternal_);
+}
+
+static inline SimdDInt32 gmx_simdcall
+simdLoadU(const std::int32_t *m, SimdDInt32Tag)
+{
+    return {
+               vld1_s32(m)
+    };
+}
+
+static inline void gmx_simdcall
+storeU(std::int32_t * m, SimdDInt32 a)
+{
+    vst1_s32(m, a.simdInternal_);
+}
+
+s.native_register()
+s.native_register()
+{.native_register()
+    return {
+               vdup_n_s32(0)
+    };
+}
+
+template<int index> gmx_simdcall
+static inline std::int32_t
+extract(SimdDInt32 a)
+{
+    return vget_lane_s32(a.simdInternal_, index);
+}
+
+static inline double gmx_simdcall
+reduce(SimdDouble a)
+{
+    float64x2_t b = vpaddq_f64(a.simdInternal_, a.simdInternal_);
+    return vgetq_lane_f64(b, 0);
+}
+
+static inline SimdDIBool gmx_simdcall
+testBits(SimdDInt32 a)
+{
+    return {
+               vtst_s32( a.simdInternal_, a.simdInternal_)
+    };
+}
+
+static inline SimdDBool gmx_simdcall
+testBits(SimdDouble a)
+{
+    return {
+               vtstq_s64( int64x2_t(a.simdInternal_.native_register()), int64x2_t(a.simdInternal_.native_register()) )
+    };
+}
+
+static inline bool gmx_simdcall
+anyTrue(SimdDIBool a)
+{
+    return (vmaxv_u32(a.simdInternal_) != 0);
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator&(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               vand_s32(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+andNot(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               vbic_s32(b.simdInternal_, a.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator|(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               vorr_s32(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator^(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               veor_s32(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator+(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               vadd_s32(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator-(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               vsub_s32(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+operator*(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               vmul_s32(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDIBool gmx_simdcall
+operator==(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               vceq_s32(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDIBool gmx_simdcall
+operator<(SimdDInt32 a, SimdDInt32 b)
+{
+    return {
+               vclt_s32(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+
+static inline SimdDInt32 gmx_simdcall
+selectByMask(SimdDInt32 a, SimdDIBool m)
+{
+    return {
+               vand_s32(a.simdInternal_, vreinterpret_s32_u32(m.simdInternal_))
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+selectByNotMask(SimdDInt32 a, SimdDIBool m)
+{
+    return {
+               vbic_s32(a.simdInternal_, vreinterpret_s32_u32(m.simdInternal_))
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+blend(SimdDInt32 a, SimdDInt32 b, SimdDIBool sel)
+{
+    return {
+               vbsl_s32(sel.simdInternal_, b.simdInternal_, a.simdInternal_)
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+cvtR2I(SimdDouble a)
+{
+    return {
+               vmovn_s64(vcvtnq_s64_f64(a.simdInternal_.native_register()))
+    };
+}
+
+static inline SimdDInt32 gmx_simdcall
+cvttR2I(SimdDouble a)
+{
+    return {
+               vmovn_s64(vcvtq_s64_f64(a.simdInternal_.native_register()))
+    };
+}
+
+static inline SimdDouble gmx_simdcall
+cvtI2R(SimdDInt32 a)
+{
+    return {
+               vcvtq_f64_s64(vmovl_s32(a.simdInternal_))
+    };
+}
+
+static inline SimdDIBool gmx_simdcall
+cvtB2IB(SimdDBool a)
+{
+    return {
+               vqmovn_u64(a.simdInternal_.native_register())
+    };
+}
+
+static inline SimdDBool gmx_simdcall
+cvtIB2B(SimdDIBool a)
+{
+    return {
+               vorrq_u64(vmovl_u32(a.simdInternal_), vshlq_n_u64(vmovl_u32(a.simdInternal_), 32))
+    };
+}
+
+static inline void gmx_simdcall
+cvtF2DD(SimdFloat f, SimdDouble *d0, SimdDouble *d1)
+{
+    d0->simdInternal_ = vcvt_f64_f32(vget_low_f32(f.simdInternal_.native_register()));
+    d1->simdInternal_ = vcvt_high_f64_f32(f.simdInternal_.native_register());
+}
+
+static inline SimdFloat gmx_simdcall
+cvtDD2F(SimdDouble d0, SimdDouble d1)
+{
+    return {
+               vcvt_high_f32_f64(vcvt_f32_f64(d0.simdInternal_.native_register()), d1.simdInternal_.native_register())
+    };
+}
+
+static inline SimdDouble
+frexp(SimdDouble value, SimdDInt32 * exponent)
+{
+    const float64x2_t exponentMask = float64x2_t( vdupq_n_s64(0x7FF0000000000000LL) );
+    const float64x2_t mantissaMask = float64x2_t( vdupq_n_s64(0x800FFFFFFFFFFFFFLL) );
+
+    const int64x2_t   exponentBias = vdupq_n_s64(1022); // add 1 to make our definition identical to frexp()
+    const float64x2_t half         = vdupq_n_f64(0.5);
+    int64x2_t         iExponent;
+
+    iExponent               = vandq_s64( int64x2_t(value.simdInternal_.native_register()), int64x2_t(exponentMask) );
+    iExponent               = vsubq_s64(vshrq_n_s64(iExponent, 52), exponentBias);
+    exponent->simdInternal_ = vmovn_s64(iExponent);
+
+    return {
+               float64x2_t(vorrq_s64(vandq_s64(int64x2_t(value.simdInternal_.native_register()), int64x2_t(mantissaMask)), int64x2_t(half)))
+    };
+}
+
+template <MathOptimization opt = MathOptimization::Safe>
+static inline SimdDouble
+ldexp(SimdDouble value, SimdDInt32 exponent)
+{
+    const int32x2_t exponentBias = vdup_n_s32(1023);
+    int32x2_t       iExponent    = vadd_s32(exponent.simdInternal_.native_register(), exponentBias);
+    int64x2_t       iExponent64;
+
+    if (opt == MathOptimization::Safe)
+    {
+        // Make sure biased argument is not negative
+        iExponent = vmax_s32(iExponent, vdup_n_s32(0));
+    }
+
+    iExponent64 = vmovl_s32(iExponent);
+    iExponent64 = vshlq_n_s64(iExponent64, 52);
+
+    return {
+               vmulq_f64(value.simdInternal_.native_register(), float64x2_t(iExponent64))
+    };
+}
+
+
+static inline SimdDIBool gmx_simdcall
+operator&&(SimdDIBool a, SimdDIBool b)
+{
+    return {
+               vand_u32(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDIBool gmx_simdcall
+operator||(SimdDIBool a, SimdDIBool b)
+{
+    return {
+               vorr_u32(a.simdInternal_, b.simdInternal_)
+    };
+}
 #endif
 
 

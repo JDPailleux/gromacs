@@ -255,7 +255,7 @@ endfunction()
 function(gmx_find_nsimd_flags C_FLAGS_RESULT CXX_FLAGS_RESULT C_FLAGS_VARIABLE CXX_FLAGS_VARIABLE)
     find_x86_toolchain_flags(TOOLCHAIN_C_FLAGS TOOLCHAIN_CXX_FLAGS)
 
-    set(TOOLCHAIN_FLAG_FOR_NSIMD "-DAVX2 -mavx2") # Just for NSIDM with AVX2
+    set(TOOLCHAIN_FLAG_FOR_NSIMD "-DAVX2 -mavx2 -mfma") # Just for NSIDM with AVX2
 
     gmx_find_flags(NSIMD_C_FLAGS_RESULT NSIMD_CXX_FLAGS_RESULT
         "#include <nsimd/nsimd.h>

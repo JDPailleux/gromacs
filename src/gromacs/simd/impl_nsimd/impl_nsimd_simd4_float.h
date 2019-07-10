@@ -46,7 +46,34 @@
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
 
+// #include "impl_nsimd_simd4_float_defined.h"
+
+
+#if defined(NSIMD_SSE2)
+#include "gromacs/simd/impl_x86_sse2/impl_x86_sse2_simd4_float.h"
+
+#elif defined(NSIMD_SSE42)
+#include "gromacs/simd/gromacs/simd/impl_x86_sse4_1/impl_x86_sse4_1_simd4_float.h"
+
+#elif defined(NSIMD_AVX2)
+// #include "gromacs/simd/impl_x86_avx2_256/impl_x86_avx2_256_simd4_float.h"
 #include "impl_nsimd_simd4_float_defined.h"
+#elif defined(NSIMD_AVX)
+#include "gromacs/simd/impl_x86_avx_256/impl_x86_avx_256_simd4_float.h"
+
+#elif defined(NSIMD_AVX512_KNL) 
+#include "gromacs/simd/impl_x86_avx_512_knl/impl_x86_avx_512_knl_simd4_float.h"
+
+#elif defined(NSIMD_AVX512_SKYLAKE)
+#include "gromacs/simd/impl_x86_avx_512/impl_x86_avx_512_simd4_float.h"
+
+#elif defined(NSIMD_AARCH64) 
+#include "gromacs/simd/impl_arm_neon_asimd/impl_arm_neon_asimd_simd4_float.h"
+
+#elif defined(NSIMD_ARM_NEON)
+#include "gromacs/simd/impl_arm_neon/impl_arm_neon_simd4_float.h"
+
+#endif
 
 
 #endif // GMX_SIMD_IMPL_NSIMD_SIMD4_FLOAT_

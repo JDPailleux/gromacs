@@ -72,7 +72,67 @@ operator<=(Simd4Double a, Simd4Double b)
     };
 }
 
-#else
+#elif (defined(NSIMD_AVX512_KNL) || defined(NSIMD_AVX512_SKYLAKE))
+
+static inline double gmx_simdcall
+dotProduct(Simd4Double a, Simd4Double b)
+{
+    __m128d tmp1, tmp2;
+    a.simdInternal_  = _mm256_mul_pd(a.simdInternal_.native_register(), b.simdInternal_.native_register());
+    tmp1             = _mm256_castpd256_pd128(a.simdInternal_.native_register());
+    tmp2             = _mm256_extractf128_pd(a.simdInternal_.native_register(), 0x1);
+
+    tmp1 = _mm_add_pd(tmp1, _mm_permute_pd(tmp1, _MM_SHUFFLE2(0, 1)));
+    tmp1 = _mm_add_pd(tmp1, tmp2);
+    return *reinterpret_cast<double *>(&tmp1);
+}
+
+static inline void gmx_simdcall
+transpose(Simd4Double * v0, Simd4Double * v1,
+          Simd4Double * v2, Simd4Double * v3)
+{
+    __m256d t1, t2, t3, t4;
+    t1                = _mm256_unpacklo_pd(v0->simdInternal_.native_register(), v1->simdInternal_.native_register());
+    t2                = _mm256_unpackhi_pd(v0->simdInternal_.native_register(), v1->simdInternal_.native_register());
+    t3                = _mm256_unpacklo_pd(v2->simdInternal_.native_register(), v3->simdInternal_.native_register());
+    t4                = _mm256_unpackhi_pd(v2->simdInternal_.native_register(), v3->simdInternal_.native_register());
+    v0->simdInternal_ = _mm256_permute2f128_pd(t1, t3, 0x20);
+    v1->simdInternal_ = _mm256_permute2f128_pd(t2, t4, 0x20);
+    v2->simdInternal_ = _mm256_permute2f128_pd(t1, t3, 0x31);
+    v3->simdInternal_ = _mm256_permute2f128_pd(t2, t4, 0x31);
+}
+
+static inline Simd4DBool gmx_simdcall
+operator==(Simd4Double a, Simd4Double b)
+{
+    return {
+               _mm512_mask_cmp_pd_mask(avx512Int2Mask(0xF), _mm512_castpd256_pd512(a.simdInternal_.native_register()), _mm512_castpd256_pd512(b.simdInternal_.native_register()), _CMP_EQ_OQ)
+    };
+}
+
+static inline Simd4DBool gmx_simdcall
+operator!=(Simd4Double a, Simd4Double b)
+{
+    return {
+               _mm512_mask_cmp_pd_mask(avx512Int2Mask(0xF), _mm512_castpd256_pd512(a.simdInternal_.native_register()), _mm512_castpd256_pd512(b.simdInternal_.native_register()), _CMP_NEQ_OQ)
+    };
+}
+
+static inline Simd4DBool gmx_simdcall
+operator<(Simd4Double a, Simd4Double b)
+{
+    return {
+               _mm512_mask_cmp_pd_mask(avx512Int2Mask(0xF), _mm512_castpd256_pd512(a.simdInternal_.native_register()), _mm512_castpd256_pd512(b.simdInternal_.native_register()), _CMP_LT_OQ)
+    };
+}
+
+static inline Simd4DBool gmx_simdcall
+operator<=(Simd4Double a, Simd4Double b)
+{
+    return {
+               _mm512_mask_cmp_pd_mask(avx512Int2Mask(0xF), _mm512_castpd256_pd512(a.simdInternal_.native_register()), _mm512_castpd256_pd512(b.simdInternal_.native_register()), _CMP_LE_OQ)
+    };
+}
 
 #endif
 

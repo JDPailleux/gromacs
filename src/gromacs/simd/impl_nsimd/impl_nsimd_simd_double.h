@@ -138,32 +138,36 @@ operator||(SimdDBool a, SimdDBool b)
 // static inline SimdDBool gmx_simdcall
 // operator==(SimdDouble a, SimdDouble b)
 // {
+//     nsimd::pack<double> ffff = nsimd::reinterpret<nsimd::pack<double>>(nsimd::set1<nsimd::pack<unsigned long>>(-1ul));
 //     return {
-//                nsimd::if_else1(a.simdInternal_== b.simdInternal_, nsimd::set1<nsimd::pack<double>>(GMX_DOUBLE_MAX), nsimd::set1<nsimd::pack<double>>(0.0))
+//                nsimd::if_else1(a.simdInternal_== b.simdInternal_, ffff, nsimd::set1<nsimd::pack<double>>(0.0))
 //     };
 // }
 
 // static inline SimdDBool gmx_simdcall
 // operator!=(SimdDouble a, SimdDouble b)
 // {
+//     nsimd::pack<double> ffff = nsimd::reinterpret<nsimd::pack<double>>(nsimd::set1<nsimd::pack<unsigned long>>(-1ul));
 //     return {
-//                nsimd::if_else1(a.simdInternal_!= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(GMX_DOUBLE_MAX), nsimd::set1<nsimd::pack<double>>(0.0))
+//                nsimd::if_else1(a.simdInternal_!= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(ffff), nsimd::set1<nsimd::pack<double>>(0.0))
 //     };
 // }
 
 // static inline SimdDBool gmx_simdcall
 // operator<(SimdDouble a, SimdDouble b)
 // {
+//     nsimd::pack<double> ffff = nsimd::reinterpret<nsimd::pack<double>>(nsimd::set1<nsimd::pack<unsigned long>>(-1ul));
 //     return {
-//                nsimd::if_else1(a.simdInternal_< b.simdInternal_, nsimd::set1<nsimd::pack<double>>(GMX_DOUBLE_MAX), nsimd::set1<nsimd::pack<double>>(0.0))
+//                nsimd::if_else1(a.simdInternal_< b.simdInternal_, nsimd::set1<nsimd::pack<double>>(ffff), nsimd::set1<nsimd::pack<double>>(0.0))
 //     };
 // }
 
 // static inline SimdDBool gmx_simdcall
 // operator<=(SimdDouble a, SimdDouble b)
 // {
+//     nsimd::pack<double> ffff = nsimd::reinterpret<nsimd::pack<double>>(nsimd::set1<nsimd::pack<unsigned long>>(-1ul));
 //     return {
-//                nsimd::if_else1(a.simdInternal_<= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(GMX_DOUBLE_MAX), nsimd::set1<nsimd::pack<double>>(0.0))
+//                nsimd::if_else1(a.simdInternal_<= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(ffff), nsimd::set1<nsimd::pack<double>>(0.0))
 //     };
 // }
 

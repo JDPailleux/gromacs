@@ -74,6 +74,9 @@
 /** Define if we are building for Cygwin */
 #cmakedefine01 GMX_CYGWIN
 
+/* NSIMD was selected for SIMD instruction set level */
+#cmakedefine01 GMX_SIMD_NSIMD
+
 /* SSE2 was selected for SIMD instruction set level */
 #cmakedefine01 GMX_SIMD_X86_SSE2
 

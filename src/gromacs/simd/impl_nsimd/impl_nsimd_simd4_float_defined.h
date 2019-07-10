@@ -151,7 +151,8 @@ static inline Simd4Float gmx_simdcall
 fma(Simd4Float a, Simd4Float b, Simd4Float c)
 {
     return {
-               _mm_add_ps(_mm_mul_ps(a.simdInternal_, b.simdInternal_), c.simdInternal_)
+            //    _mm_add_ps(_mm_mul_ps(a.simdInternal_, b.simdInternal_), c.simdInternal_)
+            _mm_fmadd_ps(a.simdInternal_, b.simdInternal_, c.simdInternal_)
     };
 }
 

@@ -36,7 +36,100 @@
 #ifndef GMX_SIMD_IMPL_NSIMD_DEFINITIONS_H
 #define GMX_SIMD_IMPL_NSIMD_DEFINITIONS_H
 
-// Capability definitions for 256-bit NSIMD
+#if (defined(NSIMD_SSE2) || defined(NSIMD_SSE42))
+#define GMX_SIMD                                1
+#define GMX_SIMD_HAVE_FLOAT                     1
+#define GMX_SIMD_HAVE_DOUBLE                    1
+#define GMX_SIMD_HAVE_LOADU                     1
+#define GMX_SIMD_HAVE_STOREU                    1
+#define GMX_SIMD_HAVE_LOGICAL                   1
+#define GMX_SIMD_HAVE_FMA                       0
+#define GMX_SIMD_HAVE_FINT32_EXTRACT            1  // No SSE2 instruction, but use shifts
+#define GMX_SIMD_HAVE_FINT32_LOGICAL            1
+#define GMX_SIMD_HAVE_FINT32_ARITHMETICS        1
+#define GMX_SIMD_HAVE_DINT32_EXTRACT            1  // No SSE2 instruction, but use shifts
+#define GMX_SIMD_HAVE_DINT32_LOGICAL            1
+#define GMX_SIMD_HAVE_DINT32_ARITHMETICS        1
+#define GMX_SIMD_HAVE_NATIVE_COPYSIGN_FLOAT     0
+#define GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_FLOAT   0
+#define GMX_SIMD_HAVE_NATIVE_RCP_ITER_FLOAT     0
+#define GMX_SIMD_HAVE_NATIVE_LOG_FLOAT          0
+#define GMX_SIMD_HAVE_NATIVE_EXP2_FLOAT         0
+#define GMX_SIMD_HAVE_NATIVE_EXP_FLOAT          0
+#define GMX_SIMD_HAVE_NATIVE_COPYSIGN_DOUBLE    0
+#define GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_DOUBLE  0
+#define GMX_SIMD_HAVE_NATIVE_RCP_ITER_DOUBLE    0
+#define GMX_SIMD_HAVE_NATIVE_LOG_DOUBLE         0
+#define GMX_SIMD_HAVE_NATIVE_EXP2_DOUBLE        0
+#define GMX_SIMD_HAVE_NATIVE_EXP_DOUBLE         0
+#define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_FLOAT   1
+#define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_DOUBLE  1
+#define GMX_SIMD_HAVE_HSIMD_UTIL_FLOAT          0  // No need for half-simd, width is 4
+#define GMX_SIMD_HAVE_HSIMD_UTIL_DOUBLE         0  // No need for half-simd, width is 2
+
+#define GMX_SIMD4_HAVE_FLOAT                    1
+#define GMX_SIMD4_HAVE_DOUBLE                   0
+
+// Implementation details
+#define GMX_SIMD_FLOAT_WIDTH                    4
+#define GMX_SIMD_DOUBLE_WIDTH                   2
+#define GMX_SIMD_FINT32_WIDTH                   4
+#define GMX_SIMD_DINT32_WIDTH                   2
+#define GMX_SIMD4_WIDTH                         4
+#define GMX_SIMD_ALIGNMENT                     16 // Bytes (4*single or 2*double)
+#define GMX_SIMD_RSQRT_BITS                    11
+#define GMX_SIMD_RCP_BITS                      11
+
+
+#elif defined(NSIMD_AVX)
+
+#define GMX_SIMD                                1
+#define GMX_SIMD_HAVE_FLOAT                     1
+#define GMX_SIMD_HAVE_DOUBLE                    1
+#define GMX_SIMD_HAVE_LOADU                     1
+#define GMX_SIMD_HAVE_STOREU                    1
+#define GMX_SIMD_HAVE_LOGICAL                   1
+#define GMX_SIMD_HAVE_FMA                       0
+#define GMX_SIMD_HAVE_FINT32_EXTRACT            1 // Emulated
+#define GMX_SIMD_HAVE_FINT32_LOGICAL            0 // AVX1 cannot do 256-bit int shifts
+#define GMX_SIMD_HAVE_FINT32_ARITHMETICS        0 // AVX1 cannot do 256-bit int +,-,*
+#define GMX_SIMD_HAVE_DINT32_EXTRACT            1 // Native, since we use __m128i
+#define GMX_SIMD_HAVE_DINT32_LOGICAL            1
+#define GMX_SIMD_HAVE_DINT32_ARITHMETICS        1
+#define GMX_SIMD_HAVE_NATIVE_COPYSIGN_FLOAT     0
+#define GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_FLOAT   0
+#define GMX_SIMD_HAVE_NATIVE_RCP_ITER_FLOAT     0
+#define GMX_SIMD_HAVE_NATIVE_LOG_FLOAT          0
+#define GMX_SIMD_HAVE_NATIVE_EXP2_FLOAT         0
+#define GMX_SIMD_HAVE_NATIVE_EXP_FLOAT          0
+#define GMX_SIMD_HAVE_NATIVE_COPYSIGN_DOUBLE    0
+#define GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_DOUBLE  0
+#define GMX_SIMD_HAVE_NATIVE_RCP_ITER_DOUBLE    0
+#define GMX_SIMD_HAVE_NATIVE_LOG_DOUBLE         0
+#define GMX_SIMD_HAVE_NATIVE_EXP2_DOUBLE        0
+#define GMX_SIMD_HAVE_NATIVE_EXP_DOUBLE         0
+#define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_FLOAT   1
+#define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_DOUBLE  1
+#define GMX_SIMD_HAVE_HSIMD_UTIL_FLOAT          1
+#define GMX_SIMD_HAVE_HSIMD_UTIL_DOUBLE         0 // Not needed for width 4
+#define GMX_SIMD_HAVE_4NSIMD_UTIL_FLOAT         1
+
+#define GMX_SIMD4_HAVE_FLOAT                    1
+#define GMX_SIMD4_HAVE_DOUBLE                   1
+
+// Implementation details
+#define GMX_SIMD_FLOAT_WIDTH                    8
+#define GMX_SIMD_DOUBLE_WIDTH                   4
+#define GMX_SIMD_FINT32_WIDTH                   8
+#define GMX_SIMD_DINT32_WIDTH                   4
+#define GMX_SIMD4_WIDTH                         4
+#define GMX_SIMD_ALIGNMENT                     32 // Bytes (8*single or 4*double)
+#define GMX_SIMD_RSQRT_BITS                    11
+#define GMX_SIMD_RCP_BITS                      11
+
+#elif defined(NSIMD_AVX2)
+
+// Capability definitions for 256-bit AVX2
 #define GMX_SIMD                                1
 #define GMX_SIMD_HAVE_FLOAT                     1
 #define GMX_SIMD_HAVE_DOUBLE                    1
@@ -64,25 +157,108 @@
 #define GMX_SIMD_HAVE_NATIVE_EXP_DOUBLE         0
 #define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_FLOAT   1
 #define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_DOUBLE  1
-#define GMX_SIMD_HAVE_HSIMD_UTIL_FLOAT          1 // 1
+#define GMX_SIMD_HAVE_HSIMD_UTIL_FLOAT          1
 #define GMX_SIMD_HAVE_HSIMD_UTIL_DOUBLE         0 // Not needed for width 4
 #define GMX_SIMD_HAVE_4NSIMD_UTIL_FLOAT         1
 
-#if (defined(NSIMD_SSE2) || defined(NSIMD_SSE42))
 #define GMX_SIMD4_HAVE_FLOAT                    1
-#define GMX_SIMD4_HAVE_DOUBLE                   0
+#define GMX_SIMD4_HAVE_DOUBLE                   1
 
 // Implementation details
-#define GMX_SIMD_FLOAT_WIDTH                    4
-#define GMX_SIMD_DOUBLE_WIDTH                   2
-#define GMX_SIMD_FINT32_WIDTH                   4
-#define GMX_SIMD_DINT32_WIDTH                   2
+#define GMX_SIMD_FLOAT_WIDTH                    8
+#define GMX_SIMD_DOUBLE_WIDTH                   4
+#define GMX_SIMD_FINT32_WIDTH                   8
+#define GMX_SIMD_DINT32_WIDTH                   4
 #define GMX_SIMD4_WIDTH                         4
-#define GMX_SIMD_ALIGNMENT                     16 // Bytes (4*single or 2*double)
+#define GMX_SIMD_ALIGNMENT                     32 // Bytes (8*single or 4*double)
 #define GMX_SIMD_RSQRT_BITS                    11
 #define GMX_SIMD_RCP_BITS                      11
 
-#elif (defined(NSIMD_AVX2) || defined(NSIMD_AVX))
+#elif defined(NSIMD_AVX512_KNL)
+
+#include <math.h>
+
+#define GMX_SIMD                                   1
+#define GMX_SIMD_HAVE_FLOAT                        1
+#define GMX_SIMD_HAVE_DOUBLE                       1
+#define GMX_SIMD_HAVE_LOADU                        1
+#define GMX_SIMD_HAVE_STOREU                       1
+#define GMX_SIMD_HAVE_LOGICAL                      1
+#define GMX_SIMD_HAVE_FMA                          1
+#define GMX_SIMD_HAVE_FINT32_EXTRACT               0
+#define GMX_SIMD_HAVE_FINT32_LOGICAL               1
+#define GMX_SIMD_HAVE_FINT32_ARITHMETICS           1
+// Technically it is straightforward to emulate extract on AVX-512F through
+// memory operations, but when applied to 16 elements as part of a table lookup
+// it will be faster to just store the entire vector once, so we avoid setting it.
+#define GMX_SIMD_HAVE_DINT32_EXTRACT               0
+#define GMX_SIMD_HAVE_DINT32_LOGICAL               1
+#define GMX_SIMD_HAVE_DINT32_ARITHMETICS           1
+#define GMX_SIMD_HAVE_NATIVE_COPYSIGN_FLOAT        1
+#define GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_FLOAT      0
+#define GMX_SIMD_HAVE_NATIVE_RCP_ITER_FLOAT        0
+#define GMX_SIMD_HAVE_NATIVE_LOG_FLOAT             0
+#define GMX_SIMD_HAVE_NATIVE_EXP2_FLOAT            1
+#define GMX_SIMD_HAVE_NATIVE_EXP_FLOAT             1
+#define GMX_SIMD_HAVE_NATIVE_COPYSIGN_DOUBLE       1
+#define GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_DOUBLE     0
+#define GMX_SIMD_HAVE_NATIVE_RCP_ITER_DOUBLE       0
+#define GMX_SIMD_HAVE_NATIVE_LOG_DOUBLE            0
+#define GMX_SIMD_HAVE_NATIVE_EXP2_DOUBLE           0
+#define GMX_SIMD_HAVE_NATIVE_EXP_DOUBLE            0
+#define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_FLOAT    1
+#define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_DOUBLE   1
+#define GMX_SIMD_HAVE_HSIMD_UTIL_FLOAT             1
+#define GMX_SIMD_HAVE_HSIMD_UTIL_DOUBLE            1
+#define GMX_SIMD_HAVE_4NSIMD_UTIL_FLOAT            1
+#define GMX_SIMD_HAVE_4NSIMD_UTIL_DOUBLE           1
+
+#define GMX_SIMD4_HAVE_FLOAT                       1
+#define GMX_SIMD4_HAVE_DOUBLE                      1
+
+// Implementation details
+#define GMX_SIMD_FLOAT_WIDTH                      16
+#define GMX_SIMD_DOUBLE_WIDTH                      8
+#define GMX_SIMD_FINT32_WIDTH                     16
+#define GMX_SIMD_DINT32_WIDTH                      8
+#define GMX_SIMD4_WIDTH                            4
+#define GMX_SIMD_ALIGNMENT                        64 // Bytes (16*single or 8*double)
+#define GMX_SIMD_RSQRT_BITS                       28
+#define GMX_SIMD_RCP_BITS                         28
+
+#elif defined(NSIMD_AVX512_SKYLAKE)
+
+// Capability definitions for 256-bit AVX
+#define GMX_SIMD                                1
+#define GMX_SIMD_HAVE_FLOAT                     1
+#define GMX_SIMD_HAVE_DOUBLE                    1
+#define GMX_SIMD_HAVE_LOADU                     1
+#define GMX_SIMD_HAVE_STOREU                    1
+#define GMX_SIMD_HAVE_LOGICAL                   1
+#define GMX_SIMD_HAVE_FMA                       0
+#define GMX_SIMD_HAVE_FINT32_EXTRACT            1 // Emulated
+#define GMX_SIMD_HAVE_FINT32_LOGICAL            0 // AVX1 cannot do 256-bit int shifts
+#define GMX_SIMD_HAVE_FINT32_ARITHMETICS        0 // AVX1 cannot do 256-bit int +,-,*
+#define GMX_SIMD_HAVE_DINT32_EXTRACT            1 // Native, since we use __m128i
+#define GMX_SIMD_HAVE_DINT32_LOGICAL            1
+#define GMX_SIMD_HAVE_DINT32_ARITHMETICS        1
+#define GMX_SIMD_HAVE_NATIVE_COPYSIGN_FLOAT     0
+#define GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_FLOAT   0
+#define GMX_SIMD_HAVE_NATIVE_RCP_ITER_FLOAT     0
+#define GMX_SIMD_HAVE_NATIVE_LOG_FLOAT          0
+#define GMX_SIMD_HAVE_NATIVE_EXP2_FLOAT         0
+#define GMX_SIMD_HAVE_NATIVE_EXP_FLOAT          0
+#define GMX_SIMD_HAVE_NATIVE_COPYSIGN_DOUBLE    0
+#define GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_DOUBLE  0
+#define GMX_SIMD_HAVE_NATIVE_RCP_ITER_DOUBLE    0
+#define GMX_SIMD_HAVE_NATIVE_LOG_DOUBLE         0
+#define GMX_SIMD_HAVE_NATIVE_EXP2_DOUBLE        0
+#define GMX_SIMD_HAVE_NATIVE_EXP_DOUBLE         0
+#define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_FLOAT   1
+#define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_DOUBLE  1
+#define GMX_SIMD_HAVE_HSIMD_UTIL_FLOAT          1
+#define GMX_SIMD_HAVE_HSIMD_UTIL_DOUBLE         0 // Not needed for width 4
+#define GMX_SIMD_HAVE_4NSIMD_UTIL_FLOAT         1
 
 #define GMX_SIMD4_HAVE_FLOAT                    1
 #define GMX_SIMD4_HAVE_DOUBLE                   1
@@ -99,10 +275,35 @@
 
 #elif defined(NSIMD_AARCH64)
 
+#define GMX_SIMD                                1
+#define GMX_SIMD_HAVE_FLOAT                     1
+#define GMX_SIMD_HAVE_DOUBLE                    1
+#define GMX_SIMD_HAVE_LOADU                     1
+#define GMX_SIMD_HAVE_STOREU                    1
+#define GMX_SIMD_HAVE_LOGICAL                   1
+#define GMX_SIMD_HAVE_FMA                       1
+#define GMX_SIMD_HAVE_FINT32_EXTRACT            1
+#define GMX_SIMD_HAVE_FINT32_LOGICAL            1
+#define GMX_SIMD_HAVE_FINT32_ARITHMETICS        1
+#define GMX_SIMD_HAVE_DINT32_EXTRACT            1
+#define GMX_SIMD_HAVE_DINT32_LOGICAL            1
+#define GMX_SIMD_HAVE_DINT32_ARITHMETICS        1
+#define GMX_SIMD_HAVE_NATIVE_COPYSIGN_FLOAT     0
 #define GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_FLOAT   1
 #define GMX_SIMD_HAVE_NATIVE_RCP_ITER_FLOAT     1
+#define GMX_SIMD_HAVE_NATIVE_LOG_FLOAT          0
+#define GMX_SIMD_HAVE_NATIVE_EXP2_FLOAT         0
+#define GMX_SIMD_HAVE_NATIVE_EXP_FLOAT          0
+#define GMX_SIMD_HAVE_NATIVE_COPYSIGN_DOUBLE    0
 #define GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_DOUBLE  1
 #define GMX_SIMD_HAVE_NATIVE_RCP_ITER_DOUBLE    1
+#define GMX_SIMD_HAVE_NATIVE_LOG_DOUBLE         0
+#define GMX_SIMD_HAVE_NATIVE_EXP2_DOUBLE        0
+#define GMX_SIMD_HAVE_NATIVE_EXP_DOUBLE         0
+#define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_FLOAT   1
+#define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_DOUBLE  1
+#define GMX_SIMD_HAVE_HSIMD_UTIL_FLOAT          0  // No need for half-simd, width is 4
+#define GMX_SIMD_HAVE_HSIMD_UTIL_DOUBLE         0
 
 #define GMX_SIMD4_HAVE_FLOAT                    1
 #define GMX_SIMD4_HAVE_DOUBLE                   0
@@ -117,7 +318,83 @@
 #define GMX_SIMD_RSQRT_BITS                     8
 #define GMX_SIMD_RCP_BITS                       8
 
-#else 
+#elif defined(NSIMD_ARM_NEON)
+
+#define GMX_SIMD                                1
+#define GMX_SIMD_HAVE_FLOAT                     1
+#define GMX_SIMD_HAVE_DOUBLE                    0
+#define GMX_SIMD_HAVE_LOADU                     1
+#define GMX_SIMD_HAVE_STOREU                    1
+#define GMX_SIMD_HAVE_LOGICAL                   1
+#define GMX_SIMD_HAVE_FMA                       1
+#define GMX_SIMD_HAVE_FINT32_EXTRACT            1
+#define GMX_SIMD_HAVE_FINT32_LOGICAL            1
+#define GMX_SIMD_HAVE_FINT32_ARITHMETICS        1
+#define GMX_SIMD_HAVE_DINT32_EXTRACT            0
+#define GMX_SIMD_HAVE_DINT32_LOGICAL            0
+#define GMX_SIMD_HAVE_DINT32_ARITHMETICS        0
+#define GMX_SIMD_HAVE_NATIVE_COPYSIGN_FLOAT     0
+#define GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_FLOAT   0  // Although there is support, it is disabled in GROMACS, because rsqrtIter does not work correctly for inputs near MAX_FLOAT
+#define GMX_SIMD_HAVE_NATIVE_RCP_ITER_FLOAT     1
+#define GMX_SIMD_HAVE_NATIVE_LOG_FLOAT          0
+#define GMX_SIMD_HAVE_NATIVE_EXP2_FLOAT         0
+#define GMX_SIMD_HAVE_NATIVE_EXP_FLOAT          0
+#define GMX_SIMD_HAVE_NATIVE_COPYSIGN_DOUBLE    0
+#define GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_DOUBLE  0
+#define GMX_SIMD_HAVE_NATIVE_RCP_ITER_DOUBLE    0
+#define GMX_SIMD_HAVE_NATIVE_LOG_DOUBLE         0
+#define GMX_SIMD_HAVE_NATIVE_EXP2_DOUBLE        0
+#define GMX_SIMD_HAVE_NATIVE_EXP_DOUBLE         0
+#define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_FLOAT   1
+#define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_DOUBLE  0
+#define GMX_SIMD_HAVE_HSIMD_UTIL_FLOAT          0  // No need for half-simd, width is 4
+#define GMX_SIMD_HAVE_HSIMD_UTIL_DOUBLE         0
+
+#define GMX_SIMD4_HAVE_FLOAT                    1
+#define GMX_SIMD4_HAVE_DOUBLE                   0
+
+// Implementation details
+#define GMX_SIMD_FLOAT_WIDTH                    4
+#undef  GMX_SIMD_DOUBLE_WIDTH
+#define GMX_SIMD_FINT32_WIDTH                   4
+#undef  GMX_SIMD_DINT32_WIDTH
+#define GMX_SIMD4_WIDTH                         4
+#define GMX_SIMD_ALIGNMENT                     16 // Bytes (4*single)
+#define GMX_SIMD_RSQRT_BITS                     8
+#define GMX_SIMD_RCP_BITS                       8
+
+#else
+// Capability definitions for 256-bit AVX2
+#define GMX_SIMD                                1
+#define GMX_SIMD_HAVE_FLOAT                     1
+#define GMX_SIMD_HAVE_DOUBLE                    1
+#define GMX_SIMD_HAVE_LOADU                     1
+#define GMX_SIMD_HAVE_STOREU                    1
+#define GMX_SIMD_HAVE_LOGICAL                   1
+#define GMX_SIMD_HAVE_FMA                       0
+#define GMX_SIMD_HAVE_FINT32_EXTRACT            1
+#define GMX_SIMD_HAVE_FINT32_LOGICAL            1
+#define GMX_SIMD_HAVE_FINT32_ARITHMETICS        1
+#define GMX_SIMD_HAVE_DINT32_EXTRACT            1
+#define GMX_SIMD_HAVE_DINT32_LOGICAL            1
+#define GMX_SIMD_HAVE_DINT32_ARITHMETICS        1
+#define GMX_SIMD_HAVE_NATIVE_COPYSIGN_FLOAT     0
+#define GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_FLOAT   0
+#define GMX_SIMD_HAVE_NATIVE_RCP_ITER_FLOAT     0
+#define GMX_SIMD_HAVE_NATIVE_LOG_FLOAT          0
+#define GMX_SIMD_HAVE_NATIVE_EXP2_FLOAT         0
+#define GMX_SIMD_HAVE_NATIVE_EXP_FLOAT          0
+#define GMX_SIMD_HAVE_NATIVE_COPYSIGN_DOUBLE    0
+#define GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_DOUBLE  0
+#define GMX_SIMD_HAVE_NATIVE_RCP_ITER_DOUBLE    0
+#define GMX_SIMD_HAVE_NATIVE_LOG_DOUBLE         0
+#define GMX_SIMD_HAVE_NATIVE_EXP2_DOUBLE        0
+#define GMX_SIMD_HAVE_NATIVE_EXP_DOUBLE         0
+#define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_FLOAT   1
+#define GMX_SIMD_HAVE_GATHER_LOADU_BYSIMDINT_TRANSPOSE_DOUBLE  1
+#define GMX_SIMD_HAVE_HSIMD_UTIL_FLOAT          1
+#define GMX_SIMD_HAVE_HSIMD_UTIL_DOUBLE         0 // Not needed for width 4
+#define GMX_SIMD_HAVE_4NSIMD_UTIL_FLOAT         1
 
 #define GMX_SIMD4_HAVE_FLOAT                    1
 #define GMX_SIMD4_HAVE_DOUBLE                   1
