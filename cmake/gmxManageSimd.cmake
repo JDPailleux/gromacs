@@ -54,6 +54,7 @@ endfunction()
 macro(gmx_manage_simd)
 
 set(GMX_SIMD_ACCURACY_BITS_SINGLE 22 CACHE STRING "Target mantissa bits for SIMD single math")
+set(GMX_SIMD_NSIMD 1 CACHE STRING "Target NSIMD")
 #
 # Note that we typically restrict double precision target accuracy to be twice that
 # of single. This means we only need one more N-R iteration for 1/sqrt(x) and 1(x),

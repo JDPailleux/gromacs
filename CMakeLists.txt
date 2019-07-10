@@ -255,7 +255,7 @@ mark_as_advanced(GMX_BROKEN_CALLOC)
 
 option(GMX_OPENMP "Enable OpenMP-based multithreading" ON)
 
-#option(GMX_NSIMD "Enable NSIMD" ON)
+option(GMX_SIMD_NSIMD "Enable NSIMD" OFF)
 
 option(GMX_USE_TNG "Use the TNG library for trajectory I/O" ON)
 
@@ -307,6 +307,12 @@ include(gmxManageOpenMP)
 # NSIMD support
 ######################################################################
 include(gmxManageNSIMD)
+
+if(${GMX_SIMD} STREQUAL "NSIMD")
+    set(GMX_SIMD_NSIMD 1)
+else()
+    set(GMX_SIMD_NSIMD 0)
+endif(${GMX_SIMD} STREQUAL "NSIMD")
 
 
 ######################################################################
