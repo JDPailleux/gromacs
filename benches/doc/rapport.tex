@@ -1,0 +1,166 @@
+\input{tex/preambule}
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{amsmath} 
+\usepackage{algorithmic}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{multicol}
+
+
+%\author{Agenium Scale}
+\title{\includegraphics[width=27em]{tex/scale.png}}
+\begin{document}
+\maketitle
+\clearpage
+\pagenumbering{gobble}
+
+\begin{flushright}\textit{}\end{flushright}
+
+
+\tableofcontents
+\newpage
+\section{Introduction} %(SOME PAGES)
+	\subsection{About this document}
+ This document presents the results of benchmarks performed by AGNENIUM SCALE on Lenovo ThinkSys-tem SR630 ?(Intel Skylake/AVX-512 capable chip).\\
+ 
+	This document is meant to be read by software developers.  The explanations provided in thepresent  sections  are  not  intended  to  be  detailed.   We  assume  that  the  reader  has  sufficientknowledge to understand the present document.  If you have any relevant question feel free to contact us at \href{contact@numscale.com}{contact@numscale.com}. \\
+ 
+ This first part of this document is the introduction which provides detailed information about the benchmarking setup, such as hardware, software, and metrics used.  The second part gives benchmark results that allow you to have a quick idea of how NSIMD performs against other GROMACS versions. The third part provides the explanations of the performances between NSIMD and the other SIMD instructions set.
+ 
+	\subsection{Benchmark Setup}
+	
+	All benchmarks are performed using tools given by GROMACS for testings the performace. For each benchmarks we have use \textit{gmx tune\_pme} without try many parallelization options. For more information on \textit{gmx tune\_pme} please see \href{http://manual.gromacs.org/documentation/2018/onlinehelp/gmx-tune\_pme.html}{http://manual.gromacs.org/documentation/2018/onlinehelp/gmx-tune\_pme.html}.
+	
+	\subsection{Contents of this document}
+	
+	\subsection{Organization of benchmarks}
+	
+	\subsection{Compiler version}
+	\begin{lstlisting}[frame=single]
+gcc (Debian 8.3.0-6) 8.3.0
+Copyright (C) 2018 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+\end{lstlisting}
+	
+	\subsection{Operating system description}
+\begin{lstlisting}[frame=single]
+Linux glastonbury 4.19.0-1-amd64 #1 SMP Debian 4.19.12-1 (2018-12-22) x86_64 GNU/Linux
+\end{lstlisting}
+	\subsection{Information about the CPU architecture}
+	\begin{lstlisting}[frame=single]
+Architecture:        x86_64
+CPU op-mode(s):      32-bit, 64-bit
+Byte Order:          Little Endian
+Address sizes:       46 bits physical, 48 bits virtual
+CPU(s):              32
+On-line CPU(s) list: 0-31
+Thread(s) per core:  2
+Core(s) per socket:  8
+Socket(s):           2
+NUMA node(s):        2
+Vendor ID:           GenuineIntel
+CPU family:          6
+Model:               85
+Model name:          Intel(R) Xeon(R) Silver 4110 CPU @ 2.10GHz
+Stepping:            4
+CPU MHz:             800.681
+BogoMIPS:            4200.00
+Virtualization:      VT-x
+L1d cache:           32K
+L1i cache:           32K
+L2 cache:            1024K
+L3 cache:            11264K
+NUMA node0 CPU(s):   0-7,16-23
+NUMA node1 CPU(s):   8-15,24-31
+Flags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti intel_ppin mba tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts hwp_epp pku ospke
+\end{lstlisting}
+	
+	\subsection{Information about the RAM}
+	\begin{lstlisting}[frame=single]
+MemTotal:       181106648 kB
+MemFree:        116730512 kB
+MemAvailable:   176785980 kB
+Buffers:         2837728 kB
+Cached:         55357572 kB
+SwapCached:            0 kB
+Active:         12591656 kB
+Inactive:       45843992 kB
+Active(anon):     381476 kB
+Inactive(anon):  1623940 kB
+Active(file):   12210180 kB
+Inactive(file): 44220052 kB
+Unevictable:           0 kB
+Mlocked:               0 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Dirty:                28 kB
+Writeback:             0 kB
+AnonPages:        238436 kB
+Mapped:           234284 kB
+Shmem:           1765072 kB
+Slab:            5388084 kB
+SReclaimable:    4988952 kB
+SUnreclaim:       399132 kB
+KernelStack:        7120 kB
+PageTables:         3412 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    90553324 kB
+Committed_AS:    2151012 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:           0 kB
+VmallocChunk:          0 kB
+Percpu:           109184 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:    178176 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:     1675868 kB
+DirectMap2M:    52379648 kB
+DirectMap1G:    132120576 kB
+	\end{lstlisting}
+	
+	\subsection{Information about the standard library}
+\section{Benchmarks results} %(5x2)
+
+In the first time we will give the report given by gromacs on the performance tests for each SIMD. Then the relevant information obtained will be extracted in a second time
+ 
+\subsection{Performance tests for SSE2 and NSIMD}
+\subsubsection{SSE2}
+\subsubsection{NSIMD}
+\subsection{Performance tests for SSE4.1 and NSIMD}
+\subsubsection{SSE4.1}
+\subsubsection{NSIMD}
+\subsection{Performance tests for AVX and NSIMD}
+\subsubsection{AVX}
+\subsubsection{NSIMD}
+\subsection{Performance tests for AVX2 and NSIMD}
+\subsubsection{AVX2}
+\subsubsection{NSIMD}
+\subsection{Performance tests for AVX512 SKYLAKE and NSIMD}
+\subsubsection{AVX512 SKYLAKE}
+\subsubsection{NSIMD}
+
+\section{Comparaison between NSIMD version and the basic version} %(5)
+\subsection{Comparaison between NSIMD and SSE2}
+\subsection{Comparaison between NSIMD and SSE4.1}
+\subsection{Comparaison between NSIMD and AVX}
+\subsection{Comparaison between NSIMD and AVX2}
+\subsection{Comparaison between NSIMD and AVX512 SKYLAKE}
+
+
+\bibliography{references}
+\bibliographystyle{unsrt}
+\end{document}
+
+

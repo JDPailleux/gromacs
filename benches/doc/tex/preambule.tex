@@ -1,0 +1,68 @@
+
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage[right=2.5cm, left=2.5cm, bottom=2cm, top=2cm]{geometry}
+\usepackage[ddmmyyyy]{datetime}
+\usepackage[table]{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue]{hyperref}
+\usepackage{lmodern,mathptmx,changepage,titlesec,hyperref,listings,lstautogobble,graphicx,array,longtable,multirow,lipsum,tikz,shorttoc,enumitem,float}
+\usetikzlibrary{arrows,automata}
+\usetikzlibrary{positioning}
+
+\renewcommand{\rmdefault}{\sfdefault} %Utilisation de la police sans-serif ("Computer Modern Sans") pour la police roman
+\renewcommand{\ttdefault}{pcr} 	%Utilisation d'une police "CourrierNew" pour la police monospaced (pour faire un listing manuel)
+\linespread{1.15}				%Interligne
+
+%Utilisation de liens colorés en bleu et soulignés
+\hypersetup{colorlinks=true, urlcolor=blue, urlbordercolor=blue, linkcolor=black, linkbordercolor=white}
+\makeatletter \Hy@AtBeginDocument{\def\@pdfborder{0 0 1} \def\@pdfborderstyle{/S/U/W 1}}\makeatother
+
+\titlespacing*{\section} {0cm}{7ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+\titlespacing*{\subsection} {0cm}{4.5ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+\titleformat*{\section}{\LARGE\bfseries}
+\titleformat*{\subsection}{\large\bfseries}
+\titleformat*{\subsubsection}{\normalsize\bfseries}
+
+\definecolor{darkgreen}{rgb}{0,0.8,0}
+\definecolor{mygray}{rgb}{0.93,0.93,0.93}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\lstset{	
+	language=C,
+	basicstyle=\small\ttfamily,
+	backgroundcolor=\color{white},
+	breaklines=true,
+	breakatwhitespace=true,
+	tabsize=3,
+	frame=none,
+	rulecolor=\color{black},
+	keywordstyle=\color{blue}\bfseries,
+	stringstyle=\color{orange},
+	showstringspaces=false,
+	commentstyle=\footnotesize\color{darkgreen},
+	keepspaces=true,
+	extendedchars=true,
+	numbers=none,
+	numberstyle=\tiny\color{lightgray},
+	stepnumber=1,
+	escapeinside={(@}{@)},
+	autogobble=true,
+	literate=
+		{á}{{\'a}}1 {é}{{\'e}}1 {í}{{}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+		{Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+		{à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+		{À}{{\`A}}1 {È}{{\'E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1
+		{ä}{{\"a}}1 {ë}{{\"e}}1 {ï}{{\"i}}1 {ö}{{\"o}}1 {ü}{{\"u}}1
+		{Ä}{{\"A}}1 {Ë}{{\"E}}1 {Ï}{{\"I}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1
+		{â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+		{Â}{{\^A}}1 {Ê}{{\^E}}1 {Î}{{\^I}}1 {Ô}{{\^O}}1 {Û}{{\^U}}1
+		{œ}{{\oe}}1 {Œ}{{\OE}}1 {æ}{{\ae}}1 {Æ}{{\AE}}1 {ß}{{\ss}}1
+		{ç}{{\c c}}1 {Ç}{{\c C}}1 {ø}{{\o}}1 {å}{{\r a}}1 {Å}{{\r A}}1
+		{€}{{e}}1 {£}{{\pounds}}1 {«}{{\guillemotleft}}1
+		{»}{{\guillemotright}}1 {ñ}{{\~n}}1 {Ñ}{{\~N}}1 {¿}{{?`}}1
+}
+
+%Redéfinition de la taille de \Huge pour le titre du document
+\makeatletter\renewcommand\Huge{\@setfontsize\Huge{37pt}{40}}\makeatother
+\date{\today}
