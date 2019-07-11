@@ -256,6 +256,8 @@ mark_as_advanced(GMX_BROKEN_CALLOC)
 option(GMX_OPENMP "Enable OpenMP-based multithreading" ON)
 
 option(GMX_SIMD_NSIMD "Enable NSIMD" OFF)
+# Option to give the build path for libnsimd
+set(GMX_NSIMD_PATH "" CACHE STRING "Build path for libnsimd")
 
 option(GMX_USE_TNG "Use the TNG library for trajectory I/O" ON)
 
