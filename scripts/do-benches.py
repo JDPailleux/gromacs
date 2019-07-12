@@ -38,8 +38,8 @@ def compil_gromacs(simd, nsimd_build_path):
 
   if simd == "nsimd" or simd == "NSIMD":
     print("We do nothing for this SIMD instruction set")
-    os.system("cmake .. -DGMX_SIMD=NSIMD -DGMX_MPI=on -DCMAKE_PREFIX_PATH=" + nsimd_build_path)
-  elif simd == "sse2" or simd == SSE2 :
+    os.system("cmake .. -DGMX_SIMD=NSIMD -DGMX_MPI=on -DGMX_NSIMD_BUILD_PATH=" + nsimd_build_path +" -DCMAKE_PREFIX_PATH=" + nsimd_build_path +"/build")
+  elif simd == "sse2" or simd == "SSE2" :
     os.system("cmake .. -DGMX_SIMD=SSE2 -DGMX_MPI=on")
   elif simd == "sse4.1" or simd == "SSE4.1" :
     os.system("cmake .. -DGMX_SIMD=SSE4.1 -DGMX_MPI=on")
@@ -56,7 +56,7 @@ def compil_gromacs(simd, nsimd_build_path):
   else :
     os.system("cmake .. -DGMX_MPI=on")
 
-  # os.system("make -j 20")
+  os.system("make -j 20")
   os.system("cd ../scripts/")
 
 
@@ -91,19 +91,16 @@ parser.add_option("-c", "--clean", dest="clean",
 
 (options, args) = parser.parse_args()
 
-if options.nsimd_path == None: 
-  # We do nothing
-else :
-  # We remove clean the report
-  if options.clean :
-    os.remove("gromacs_benches_"+ options.simd+".tex")
-    f = open("gromacs_benches_"+ options.simd+".tex","w+") 
-    f.close()
+# We remove clean the report
+if options.clean :
+  os.remove("gromacs_benches_"+ options.simd+".tex")
+  f = open("gromacs_benches_"+ options.simd+".tex","w+") 
+  f.close()
 
-  # Compiling gromacs based on simd value
-  compil_gromacs(options.simd, options.nsimd_path)
+# Compiling gromacs based on simd value
+compil_gromacs(options.simd, options.nsimd_path)
 
-  # Run benchmarks
-  benches = benchmark()
-  write_latex_file(options.simd, benches)
+# Run benchmarks
+benches = benchmark()
+write_latex_file(options.simd, benches)
 

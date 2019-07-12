@@ -39,17 +39,16 @@ for m in ${MACHINES}; do
     
   # Prepare environment
   if [ -d "gromacs/" ]; then
-    cd gromacs/ & git pull origin master & cd ..
-  else 
-    (git clone git@github.com:agenium-scale/gromacs.git)
+    rm -rf gromacs/
   fi
 
   if [ -d "nsimd/" ]; then
-    cd nsimd/ & git pull origin master & cd ..
-  else 
-    (git clone ssh://git@phabricator2.numscale.com/diffusion/67/nsimd.git)
+    rm -rf nsimd/
   fi
 
+  (git clone git@github.com:agenium-scale/gromacs.git)
+  (git clone ssh://git@phabricator2.numscale.com/diffusion/67/nsimd.git)
+  
   # Create gromacs and nsimd archives
   tar -cvzf gromacs.tar.gz gromacs/
   tar -cvzf nsimd.tar.gz nsimd/
@@ -57,8 +56,8 @@ for m in ${MACHINES}; do
   scp gromacs.tar.gz jdpailleux@${m}:${DEST_DIR}
   scp nsimd.tar.gz jdpailleux@${m}:${DEST_DIR}
   ssh jdpailleux@${m} "cd ${DEST_DIR}; tar -xzvf gromacs.tar.gz; tar -xzvf nsimd.tar.gz; rm *.tar.gz" #
-  NSIMD_PATH2 = ssh jdpailleux@${m} "cd ${DEST_DIR}/nsimd/ & pwd"
-  echo "VOICI LE PATH DE NSIMD ${NSIMD_PATH2}"
+  
+  NSIMD_PATH=$(ssh jdpailleux@${m} "cd ${DEST_DIR}/nsimd/; pwd")
 
     # Depending on which machine we are, set GMX_SIMD flags properly
     if [ "${m}" = "camelot" ]; then
@@ -75,26 +74,25 @@ for m in ${MACHINES}; do
 
     ssh jdpailleux@${m} "mkdir -p ${DEST_DIR}/gromacs/build;"
     # Compilation and benches
+      # cmake .. -DGMX_SIMD=${SIMD} -DGMX_MPI=on;
+      # make -j 40;
     for SIMD in ${GMX_SIMD}; do
       echo "==> Benches ${SIMD}"
       ssh jdpailleux@${m} """cd ${DEST_DIR}/gromacs/build; 
-      cmake .. -DGMX_SIMD=${SIMD} -DGMX_MPI=on;
-      make -j 40;
       cd ../scripts;
       python3 do-benches.py --simd=${SIMD};"""
           
     done
 
     # Compilation and benches for NSIMD
-    GMX_NSIMD_PATH="path/to/nsimd"
-    CMAKE_PREFIX_PATH="path/to/nsimd/build"
-
+    GMX_NSIMD_PATH="${NSIMD_PATH}"
+    CMAKE_PREFIX_PATH="${NSIMD_PATH}/build"
+    # cmake .. -DGMX_SIMD=NSIMD -DGMX_MPI=on -DGMX_NSIMD_BUILD_PATH=${GMX_NSIMD_PATH} -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH};
+    # make -j20; 
     echo "==> Benches NSIMD"
     ssh jdpailleux@${m}  """ cd ${DEST_DIR}/gromacs/build; 
-    cmake .. -DGMX_SIMD=NSIMD -DGMX_MPI=on -DGMX_NSIMD_BUILD_PATH=${GMX_NSIMD_PATH} -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH};
-    make -j20; 
     cd ../scripts;
-    python3 do-benches.py --simd=nsimd --nsimd_path=${GMX_NSIMD_PATH}/build; """
+    python3 do-benches.py --simd=nsimd --nsimd_path=${GMX_NSIMD_PATH}; """
     
   exit
 
