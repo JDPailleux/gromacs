@@ -34,48 +34,43 @@ def write_latex_file(simd, new_body):
 
 # Compile gromacs
 def compil_gromacs(simd, nsimd_build_path):
-  os.system("cd ../build/")
 
   if simd == "nsimd" or simd == "NSIMD":
     print("We do nothing for this SIMD instruction set")
-    os.system("cmake .. -DGMX_SIMD=NSIMD -DGMX_MPI=on -DGMX_NSIMD_BUILD_PATH=" + nsimd_build_path +" -DCMAKE_PREFIX_PATH=" + nsimd_build_path +"/build")
+    os.system("cd ../build/; cmake .. -DGMX_SIMD=NSIMD -DGMX_MPI=on -DGMX_NSIMD_BUILD_PATH=" + nsimd_build_path +" -DCMAKE_PREFIX_PATH=" + nsimd_build_path +"/build")
   elif simd == "sse2" or simd == "SSE2" :
-    os.system("cmake .. -DGMX_SIMD=SSE2 -DGMX_MPI=on")
+    os.system("cd ../build/; cmake .. -DGMX_SIMD=SSE2 -DGMX_MPI=on")
   elif simd == "sse4.1" or simd == "SSE4.1" :
-    os.system("cmake .. -DGMX_SIMD=SSE4.1 -DGMX_MPI=on")
+    os.system("cd ../build/; cmake .. -DGMX_SIMD=SSE4.1 -DGMX_MPI=on")
   elif simd == "avx" or simd == "AVX_256" :
-    os.system("cmake .. -DGMX_SIMD=AVX_256 -DGMX_MPI=on")  
+    os.system("cd ../build/; cmake .. -DGMX_SIMD=AVX_256 -DGMX_MPI=on")  
   elif simd == "avx2" or simd == "AVX2_256" :
-    os.system("cmake .. -DGMX_SIMD=AVX2_256 -DGMX_MPI=on")
+    os.system("cd ../build/; cmake .. -DGMX_SIMD=AVX2_256 -DGMX_MPI=on")
   elif simd == "avx512" or simd == "AVX_512" :
-    os.system("cmake .. -DGMX_SIMD=AVX_512 -DGMX_MPI=on")
+    os.system("cd ../build/; cmake .. -DGMX_SIMD=AVX_512 -DGMX_MPI=on")
   elif simd == "avx512_knl" or simd == "AVX_512_KNL" :
-    os.system("cmake .. -DGMX_SIMD=AVX_512_KNL -DGMX_MPI=on")
+    os.system("cd ../build/; cmake .. -DGMX_SIMD=AVX_512_KNL -DGMX_MPI=on")
   elif simd == "arm_neon" or simd == "ARM_NEON" :
-    os.system("cmake .. -DGMX_SIMD=ARM_NEON")
+    os.system("cd ../build/; cmake .. -DGMX_SIMD=ARM_NEON")
   else :
-    os.system("cmake .. -DGMX_MPI=on")
+    os.system("cd ../build/; cmake .. -DGMX_MPI=on")
 
-  os.system("make -j 20")
-  os.system("cd ../scripts/")
-
+  os.system("cd ../build/; make -j 20")
 
 # Run benchmarks and save the result into a latex file
 def benchmark():
-  os.system("cd ../build/bin/")
   # nb_process = [1, 2, 16, 32, 64]
   nb_process = [1]
   perf = ""
   for i in nb_process :
     perf = perf + "\n\n\subsection{Number of MPI rank : " + str(i) +  "}\n"
-    cmd_bench = "gmx_mpi tune_pme -r 10 -np " + str(i) + " -s " + "../topol.tpr" + " -mdrun 'gmx_mpi mdrun'"
+    cmd_bench = "../build/bin/gmx_mpi tune_pme -r 10 -np " + str(i) + " -s " + "../topol.tpr" + " -mdrun '../build/bin/gmx_mpi mdrun'"
     os.system(cmd_bench)
 
     # The result of this command is in 
     with open('perf.out', 'r') as perf_file:
       perf = perf + "\\begin{lstlisting}\n" + perf_file.read() + "\n\\end{lstlisting}\n"
 
-  os.system("cd ../scripts/")
   os.system("rm *bench.log* *perf.out*")
   return perf
 

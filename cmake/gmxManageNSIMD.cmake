@@ -5,8 +5,7 @@ include(gmxDetectCpu)
 include(gmxDetectSimd)
 
 # Set variables path 
-# set(GMX_NSIMD_ROOT "/home/jpailleux/Bureau/nsdev/nsimd")
-set(GMX_NSIMD_ROOT ${GMX_NSIMD_PATH})
+set(GMX_NSIMD_ROOT "${GMX_NSIMD_PATH}")
 set(GMX_NSIMD_INCLUDE_PATH1 "${GMX_NSIMD_ROOT}/include")
 set(GMX_NSIMD_INCLUDE_PATH2 "${GMX_NSIMD_ROOT}/nsimd/include")
 set(GMX_NSIMD_LIBRARY_PATH "${GMX_NSIMD_ROOT}/build")

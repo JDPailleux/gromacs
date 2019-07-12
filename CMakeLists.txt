@@ -308,9 +308,8 @@ include(gmxManageOpenMP)
 ######################################################################
 # NSIMD support
 ######################################################################
-include(gmxManageNSIMD)
-
 if(${GMX_SIMD} STREQUAL "NSIMD")
+    include(gmxManageNSIMD)
     set(GMX_SIMD_NSIMD 1)
 else()
     set(GMX_SIMD_NSIMD 0)
