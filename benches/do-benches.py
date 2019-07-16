@@ -63,7 +63,7 @@ def compil_gromacs(simd, nsimd_build_path):
     os.system("cd ../build/; cmake .. -DGMX_SIMD=AVX_512 -DGMX_MPI=off")
   elif simd == "avx512_knl" or simd == "AVX_512_KNL" :
     os.system("cd ../build/; cmake .. -DGMX_SIMD=AVX_512_KNL -DGMX_MPI=on")
-    os.system("cd ../build/; make -j30")
+    os.system("cd ../build/; make -j30;")
     os.system("cd ../build/; cmake .. -DGMX_SIMD=AVX_512_KNL -DGMX_MPI=off")
   elif simd == "arm_neon" or simd == "ARM_NEON" :
     os.system("cd ../build/; cmake .. -DGMX_SIMD=ARM_NEON -DGMX_MPI=on")
@@ -79,7 +79,7 @@ def compil_gromacs(simd, nsimd_build_path):
 # Run benchmarks and save the result into a latex file
 def benchmark(simd, nsimd_path):
   perf = ""
-  os.system("../build/bin/gmx tune_pme -r 10 -s topol.tpr -mdrun 'gmx_mpi mdrun'")
+  os.system("../build/bin/gmx tune_pme -r 10 -s topol.tpr -mdrun '../build/bin/gmx_mpi mdrun'")
 
   if simd != "nsimd":
     # The result of this command is in 
@@ -91,8 +91,8 @@ def benchmark(simd, nsimd_path):
     os.system("cd ../build/; make -j30")
     os.system("cd ../build/; cmake .. -DGMX_SIMD=NSIMD -DGMX_MPI=off -DGMX_NSIMD_BUILD_PATH=" + nsimd_path +" -DNSIMD_FOR="+ simd +" -DCMAKE_PREFIX_PATH=" + nsimd_path +"/build")
     os.system("cd ../build/; make -j30")
+    os.system("../build/bin/gmx tune_pme -r 10 -s topol.tpr -mdrun '../build/bin/gmx_mpi mdrun'")
     
-    compil_gromacs("nsimd", nsimd_path)
     with open('perf.out', 'r') as perf_file:
       perf = perf +"\\subsection{NSIMD for " + simd + "}\n" +"\\begin{lstlisting}[frame=single]\n" + perf_file.read() + "\n\\end{lstlisting}\n"
   else :
