@@ -47,7 +47,21 @@
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
 
+#if defined(NSIMD_AVX512_KNL) 
+#undef GMX_SIMD_X86_AVX_512_KNL
+#define GMX_SIMD_X86_AVX_512_KNL 1
+#include "gromacs/simd/impl_x86_avx_512_knl/impl_x86_avx_512_knl_simd4_double.h"
+#undef GMX_SIMD_X86_AVX_512_KNL
+#define GMX_SIMD_X86_AVX_512_KNL 0
 
+#elif defined(NSIMD_AVX512_SKYLAKE)
+#undef GMX_SIMD_X86_AVX_512
+#define GMX_SIMD_X86_AVX_512 1
+#include "gromacs/simd/impl_x86_avx_512/impl_x86_avx_512_simd4_double.h"
+#undef GMX_SIMD_X86_AVX_512
+#define GMX_SIMD_X86_AVX_512 0
+
+#else
 namespace gmx
 {
 
@@ -316,5 +330,6 @@ operator||(Simd4DBool a, Simd4DBool b)
 #include "impl_nsimd_simd4_double_defined.h"
 
 }      // namespace gm
+#endif
 
 #endif // GMX_SIMD_IMPL_NSIMD_SIMD4_DOUBLE_H

@@ -217,21 +217,21 @@ gatherLoadBySimdIntTranspose(const double *  base,
     // Use optimized bit-shift multiply for the most common alignments
     if (align == 4)
     {
-        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_, 2);
+        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_.native_register(), 2);
     }
     else if (align == 8)
     {
-        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_, 3);
+        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_.native_register(), 3);
     }
     else if (align == 12)
     {
         /* multiply by 3, then by 4 */
-        offset.simdInternal_ = _mm_add_epi32(offset.simdInternal_, _mm_slli_epi32(offset.simdInternal_, 1));
-        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_, 2);
+        offset.simdInternal_ = _mm_add_epi32(offset.simdInternal_.native_register(), _mm_slli_epi32(offset.simdInternal_.native_register(), 1));
+        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_.native_register(), 2);
     }
     else if (align == 16)
     {
-        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_, 4);
+        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_.native_register(), 4);
     }
 
     if (align == 4 || align == 8 || align == 12 || align == 16)
@@ -272,31 +272,31 @@ gatherLoadBySimdIntTranspose(const double *    base,
     // Use optimized bit-shift multiply for the most common alignments
     if (align == 2)
     {
-        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_, 1);
+        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_.native_register(), 1);
     }
     else if (align == 4)
     {
-        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_, 2);
+        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_.native_register(), 2);
     }
     else if (align == 6)
     {
         // multiply by 3, then by 2
-        offset.simdInternal_ = _mm_add_epi32(offset.simdInternal_, _mm_slli_epi32(offset.simdInternal_, 1));
-        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_, 1);
+        offset.simdInternal_ = _mm_add_epi32(offset.simdInternal_.native_register(), _mm_slli_epi32(offset.simdInternal_.native_register(), 1));
+        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_.native_register(), 1);
     }
     else if (align == 8)
     {
-        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_, 3);
+        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_.native_register(), 3);
     }
     else if (align == 12)
     {
         // multiply by 3, then by 4
-        offset.simdInternal_ = _mm_add_epi32(offset.simdInternal_, _mm_slli_epi32(offset.simdInternal_, 1));
-        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_, 2);
+        offset.simdInternal_ = _mm_add_epi32(offset.simdInternal_.native_register(), _mm_slli_epi32(offset.simdInternal_.native_register(), 1));
+        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_.native_register(), 2);
     }
     else if (align == 16)
     {
-        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_, 4);
+        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_.native_register(), 4);
     }
 
     if (align == 2 || align == 4 || align == 6 ||
@@ -334,11 +334,11 @@ gatherLoadUBySimdIntTranspose(const double *  base,
     // Do nothing for align == 1
     if (align == 2)
     {
-        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_, 1);
+        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_.native_register(), 1);
     }
     else if (align == 4)
     {
-        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_, 2);
+        offset.simdInternal_ = _mm_slli_epi32(offset.simdInternal_.native_register(), 2);
     }
 
     if (align == 1 || align == 2 || align == 4)

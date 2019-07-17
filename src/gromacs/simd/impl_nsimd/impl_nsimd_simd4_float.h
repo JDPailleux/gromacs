@@ -50,28 +50,53 @@
 
 
 #if defined(NSIMD_SSE2)
+#undef GMX_SIMD_X86_SSE2
+#define GMX_SIMD_X86_SSE2 1
 #include "gromacs/simd/impl_x86_sse2/impl_x86_sse2_simd4_float.h"
+#undef GMX_SIMD_X86_SSE2
+#define GMX_SIMD_X86_SSE2 0
 
 #elif defined(NSIMD_SSE42)
-#include "gromacs/simd/gromacs/simd/impl_x86_sse4_1/impl_x86_sse4_1_simd4_float.h"
+#undef GMX_SIMD_X86_SSE4_1
+#define GMX_SIMD_X86_SSE4_1 1
+#include "gromacs/simd/impl_x86_sse4_1/impl_x86_sse4_1_simd4_float.h"
+
+#undef GMX_SIMD_X86_SSE4_1
+#define GMX_SIMD_X86_SSE4_1 0
 
 #elif defined(NSIMD_AVX2)
-// #include "gromacs/simd/impl_x86_avx2_256/impl_x86_avx2_256_simd4_float.h"
-#include "impl_nsimd_simd4_float_defined.h"
+#include "gromacs/simd/impl_x86_avx2_256/impl_x86_avx2_256_simd4_float.h"
+
 #elif defined(NSIMD_AVX)
 #include "gromacs/simd/impl_x86_avx_256/impl_x86_avx_256_simd4_float.h"
 
 #elif defined(NSIMD_AVX512_KNL) 
+#undef GMX_SIMD_X86_AVX_512_KNL
+#define GMX_SIMD_X86_AVX_512_KNL 1
 #include "gromacs/simd/impl_x86_avx_512_knl/impl_x86_avx_512_knl_simd4_float.h"
+#undef GMX_SIMD_X86_AVX_512_KNL
+#define GMX_SIMD_X86_AVX_512_KNL 0
 
-#elif defined(NSIMD_AVX512_SKYLAKE)
+#elif defined(NSIMD_AVX512_SKYLAKE)
+#undef GMX_SIMD_X86_AVX_512
+#define GMX_SIMD_X86_AVX_512 1
 #include "gromacs/simd/impl_x86_avx_512/impl_x86_avx_512_simd4_float.h"
+#undef GMX_SIMD_X86_AVX_512
+#define GMX_SIMD_X86_AVX_512 0
 
 #elif defined(NSIMD_AARCH64) 
+#undef GMX_SIMD_ARM_NEON_ASIMD
+#define GMX_SIMD_ARM_NEON_ASIMD 1
 #include "gromacs/simd/impl_arm_neon_asimd/impl_arm_neon_asimd_simd4_float.h"
+#undef GMX_SIMD_ARM_NEON_ASIMD
+#define GMX_SIMD_ARM_NEON_ASIMD 0
 
-#elif defined(NSIMD_ARM_NEON)
+#elif defined(NSIMD_ARM_NEON)
+#undef GMX_SIMD_ARM_NEON
+#define GMX_SIMD_ARM_NEON 1
 #include "gromacs/simd/impl_arm_neon/impl_arm_neon_simd4_float.h"
+#undef GMX_SIMD_ARM_NEON
+#define GMX_SIMD_ARM_NEON 0
 
 #endif
 

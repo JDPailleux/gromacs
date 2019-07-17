@@ -74,7 +74,12 @@ gatherLoadTranspose(const float *        base,
     v2->simdInternal_ = _mm_load_ps( base + align * offset[2] );
     v3->simdInternal_ = _mm_load_ps( base + align * offset[3] );
 
-    _MM_TRANSPOSE4_PS(v0->simdInternal_.native_register(), v1->simdInternal_.native_register(), v2->simdInternal_.native_register(), v3->simdInternal_.native_register());
+    auto tmp_v0 = v0->simdInternal_.native_register();
+    auto tmp_v1 =  v0->simdInternal_.native_register(); 
+    auto tmp_v2 = v2->simdInternal_.native_register();
+    auto tmp_v3 = v3->simdInternal_.native_register();
+    _MM_TRANSPOSE4_PS(tmp_v0, tmp_v1, tmp_v2, tmp_v3);
+    // _MM_TRANSPOSE4_PS(v0->simdInternal_.native_register(), v0->simdInternal_.native_register(), v2->simdInternal_.native_register(), v3->simdInternal_.native_register());
 }
 
 template <int align>
@@ -128,9 +133,9 @@ gatherLoadUTranspose(const float *        base,
     t6                = _mm_unpacklo_ps(t3, t4);
     t7                = _mm_unpackhi_ps(t1, t2);
     t8                = _mm_unpackhi_ps(t3, t4);
-    *v0               = _mm_movelh_ps(t5, t6);
-    *v1               = _mm_movehl_ps(t6, t5);
-    *v2               = _mm_movelh_ps(t7, t8);
+    v0->simdInternal_               = _mm_movelh_ps(t5, t6);
+    v1->simdInternal_               = _mm_movehl_ps(t6, t5);
+    v2->simdInternal_              = _mm_movelh_ps(t7, t8);
 }
 
 
@@ -145,14 +150,14 @@ transposeScatterStoreU(float *              base,
     __m128 t1, t2;
 
     // general case, not aligned to 4-byte boundary
-    t1   = _mm_unpacklo_ps(v0.simdInternal_v, v1.simdInternal_.native_register());
+    t1   = _mm_unpacklo_ps(v0.simdInternal_.native_register(), v1.simdInternal_.native_register());
     t2   = _mm_unpackhi_ps(v0.simdInternal_.native_register(), v1.simdInternal_.native_register());
     _mm_storel_pi( reinterpret_cast< __m64 *>( base + align * offset[0] ), t1);
     _mm_store_ss(base + align * offset[0] + 2, v2.simdInternal_.native_register());
     _mm_storeh_pi( reinterpret_cast< __m64 *>( base + align * offset[1] ), t1);
     _mm_store_ss(base + align * offset[1] + 2, _mm_shuffle_ps(v2.simdInternal_.native_register(), v2.simdInternal_.native_register(), _MM_SHUFFLE(1, 1, 1, 1)));
     _mm_storel_pi( reinterpret_cast< __m64 *>( base + align * offset[2] ), t2);
-    _mm_store_ss(base + align * offset[2] + 2, _mm_shuffle_ps(v2.simdInternal_, v2.simdInternal_.native_register(), _MM_SHUFFLE(2, 2, 2, 2)));
+    _mm_store_ss(base + align * offset[2] + 2, _mm_shuffle_ps(v2.simdInternal_.native_register(), v2.simdInternal_.native_register(), _MM_SHUFFLE(2, 2, 2, 2)));
     _mm_storeh_pi( reinterpret_cast< __m64 *>( base + align * offset[3] ), t2);
     _mm_store_ss(base + align * offset[3] + 2, _mm_shuffle_ps(v2.simdInternal_.native_register(), v2.simdInternal_.native_register(), _MM_SHUFFLE(3, 3, 3, 3)));
 }
@@ -174,7 +179,7 @@ transposeScatterIncrU(float *              base,
         t6          = _mm_unpackhi_ps(v1.simdInternal_.native_register(), v2.simdInternal_.native_register());
         t7          = _mm_shuffle_ps(v0.simdInternal_.native_register(), t5, _MM_SHUFFLE(1, 0, 0, 0));
         t8          = _mm_shuffle_ps(v0.simdInternal_.native_register(), t5, _MM_SHUFFLE(3, 2, 0, 1));
-        t9          = _mm_shuffle_ps(v0.simdInternal_,.native_register() t6, _MM_SHUFFLE(1, 0, 0, 2));
+        t9          = _mm_shuffle_ps(v0.simdInternal_.native_register(), t6, _MM_SHUFFLE(1, 0, 0, 2));
         t10         = _mm_shuffle_ps(v0.simdInternal_.native_register(), t6, _MM_SHUFFLE(3, 2, 0, 3));
 
         t1          = _mm_load_ss(base + align * offset[0]);
@@ -247,7 +252,7 @@ transposeScatterDecrU(float *              base,
     if (align < 4)
     {
         t5          = _mm_unpacklo_ps(v1.simdInternal_.native_register(), v2.simdInternal_.native_register());
-        t6          = _mm_unpackhi_ps(v1.simdInternal_.native_register().native_register(), v2.simdInternal_);
+        t6          = _mm_unpackhi_ps(v1.simdInternal_.native_register(), v2.simdInternal_.native_register());
         t7          = _mm_shuffle_ps(v0.simdInternal_.native_register(), t5, _MM_SHUFFLE(1, 0, 0, 0));
         t8          = _mm_shuffle_ps(v0.simdInternal_.native_register(), t5, _MM_SHUFFLE(3, 2, 0, 1));
         t9          = _mm_shuffle_ps(v0.simdInternal_.native_register(), t6, _MM_SHUFFLE(1, 0, 0, 2));
@@ -383,14 +388,15 @@ reduceIncr4ReturnSum(float *    m,
                      SimdFloat  v2,
                      SimdFloat  v3)
 {
-    _MM_TRANSPOSE4_PS(v0.simdInternal_.native_register(), v1.simdInternal_.native_register(), v2.simdInternal_.native_register(), v3.simdInternal_.native_register());
+    auto tmp_v0 = v0.simdInternal_.native_register(), tmp_v1 =  v1.simdInternal_.native_register(), tmp_v2 = v2.simdInternal_.native_register(), tmp_v3 = v3.simdInternal_.native_register();
+    _MM_TRANSPOSE4_PS(tmp_v0, tmp_v1, tmp_v2, tmp_v3);
     v0.simdInternal_ = _mm_add_ps(v0.simdInternal_.native_register(), v1.simdInternal_.native_register());
     v2.simdInternal_ = _mm_add_ps(v2.simdInternal_.native_register(), v3.simdInternal_.native_register());
     v0.simdInternal_ = _mm_add_ps(v0.simdInternal_.native_register(), v2.simdInternal_.native_register());
     v2.simdInternal_ = _mm_add_ps(v0.simdInternal_.native_register(), _mm_load_ps(m));
 
     assert(std::size_t(m) % 16 == 0);
-    _mm_store_ps(m, v2.simdInternal_);
+    _mm_store_ps(m, v2.simdInternal_.native_register());
 
     __m128 b = _mm_add_ps(v0.simdInternal_.native_register(), _mm_shuffle_ps(v0.simdInternal_.native_register(), v0.simdInternal_.native_register(), _MM_SHUFFLE(1, 0, 3, 2)));
     b = _mm_add_ss(b, _mm_shuffle_ps(b, b, _MM_SHUFFLE(0, 3, 2, 1)));

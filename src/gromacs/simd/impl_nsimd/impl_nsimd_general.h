@@ -80,9 +80,6 @@ avx512Int2Mask(short i)
     return static_cast<__mmask16>(i);
 }
 
-}
-
-
 #else 
 
 static inline void

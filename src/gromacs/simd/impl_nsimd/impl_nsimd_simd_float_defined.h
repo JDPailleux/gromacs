@@ -190,7 +190,7 @@ cvttR2I(SimdFloat a)
                _mm256_cvttps_epi32(a.simdInternal_.native_register())
     };
 }
-#elif (defined(NSIMD_AVX512_KNL) || defined(NSIMD_AVX512_SKYLAKE))
+#elif (defined(NSIMD_AVX512_KNL) || defined(NSIMD_AVX512_SKYLAKE))
 
 static inline SimdFloat gmx_simdcall
 frexp(SimdFloat value, SimdFInt32 * exponent)
