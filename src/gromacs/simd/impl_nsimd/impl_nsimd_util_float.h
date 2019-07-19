@@ -425,7 +425,7 @@ avx256Transpose3By4InLanes(__m256 * v0,
                            __m256 * v1,
                            __m256 * v2,
                            __m256 * v3)
-{
+{ 
     __m256 t1 = _mm256_unpacklo_ps(*v0, *v1);
     __m256 t2 = _mm256_unpackhi_ps(*v0, *v1);
     *v0       = _mm256_shuffle_ps(t1, *v2, _MM_SHUFFLE(0, 0, 1, 0));

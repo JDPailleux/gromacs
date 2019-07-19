@@ -27,3 +27,9 @@ CMakeLists.txt.user
 /VersionInfo*.cmake
 Testing
 *.nsimd.h
+*.out
+*.log
+*.aux
+*.synctex.gz
+*.toc
+

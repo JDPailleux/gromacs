@@ -615,39 +615,6 @@ blend(SimdDInt32 a, SimdDInt32 b, SimdDIBool sel)
     };
 }
 
-static inline SimdDBool gmx_simdcall
-operator==(SimdDouble a, SimdDouble b)
-{
-    return {
-               _mm_cmpeq_pd(a.simdInternal_.native_register(), b.simdInternal_.native_register())
-    };
-}
-
-static inline SimdDBool gmx_simdcall
-operator!=(SimdDouble a, SimdDouble b)
-{
-    return {
-               _mm_cmpneq_pd(a.simdInternal_.native_register(), b.simdInternal_.native_register())
-    };
-}
-
-static inline SimdDBool gmx_simdcall
-operator<(SimdDouble a, SimdDouble b)
-{
-    return {
-               _mm_cmplt_pd(a.simdInternal_.native_register(), b.simdInternal_.native_register())
-    };
-}
-
-static inline SimdDBool gmx_simdcall
-operator<=(SimdDouble a, SimdDouble b)
-{
-    return {
-               _mm_cmple_pd(a.simdInternal_.native_register(), b.simdInternal_.native_register())
-    };
-}
-
-
 static inline SimdDInt32 gmx_simdcall
 cvtR2I(SimdDouble a)
 {

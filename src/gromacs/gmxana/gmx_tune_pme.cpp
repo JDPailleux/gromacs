@@ -672,12 +672,14 @@ static void check_mdrun_works(gmx_bool    bThreads,
     if (bThreads)
     {
         snew(command, std::strlen(cmd_mdrun) + std::strlen(cmd_np) + std::strlen(filename) + 50);
-        sprintf(command, "%s%s -version -maxh 0.001 1> %s 2>&1", cmd_mdrun, cmd_np, filename);
+        //sprintf(command, "%s%s -version -maxh 0.001 1> %s 2>&1", cmd_mdrun, cmd_np, filename);
+        sprintf(command, "%s%s -version 1> %s 2>&1", cmd_mdrun, cmd_np, filename);
     }
     else
     {
         snew(command, std::strlen(cmd_mpirun) + std::strlen(cmd_np) + std::strlen(cmd_mdrun) + std::strlen(filename) + 50);
-        sprintf(command, "%s%s%s -version -maxh 0.001 1> %s 2>&1", cmd_mpirun, cmd_np, cmd_mdrun, filename);
+        //sprintf(command, "%s%s%s -version -maxh 0.001 1> %s 2>&1", cmd_mpirun, cmd_np, cmd_mdrun, filename);
+        sprintf(command, "%s%s%s -version 1> %s 2>&1", cmd_mpirun, cmd_np, cmd_mdrun, filename);
     }
     fprintf(stdout, "Trying '%s' ... ", command);
     make_backup(filename);

@@ -40,24 +40,24 @@ for m in ${MACHINES}; do
   ssh -t jdpailleux@${m} "mkdir -p ${DEST_DIR}; cd ${DEST_DIR}"
     
   # Prepare environment
-  # if [ -d "gromacs/" ]; then
-  #   rm -rf gromacs/
-  # fi
+  if [ -d "gromacs/" ]; then
+    rm -rf gromacs/
+  fi
 
-  # if [ -d "nsimd/" ]; then
-  #   rm -rf nsimd/
-  # fi
+  if [ -d "nsimd/" ]; then
+    rm -rf nsimd/
+  fi
 
-  # (git clone git@github.com:agenium-scale/gromacs.git)
-  # (git clone ssh://git@phabricator2.numscale.com/diffusion/67/nsimd.git)
+  (git clone git@github.com:agenium-scale/gromacs.git)
+  (git clone ssh://git@phabricator2.numscale.com/diffusion/67/nsimd.git)
   
-  # Create gromacs and nsimd archives
-  # tar -cvzf gromacs.tar.gz gromacs/
-  # tar -cvzf nsimd.tar.gz nsimd/
+  Create gromacs and nsimd archives
+  tar -cvzf gromacs.tar.gz gromacs/
+  tar -cvzf nsimd.tar.gz nsimd/
 
-  # scp gromacs.tar.gz jdpailleux@${m}:${DEST_DIR}
-  # scp nsimd.tar.gz jdpailleux@${m}:${DEST_DIR}
-  # ssh jdpailleux@${m} "cd ${DEST_DIR}; tar -xzvf gromacs.tar.gz; tar -xzvf nsimd.tar.gz; rm *.tar.gz" #
+  scp gromacs.tar.gz jdpailleux@${m}:${DEST_DIR}
+  scp nsimd.tar.gz jdpailleux@${m}:${DEST_DIR}
+  ssh jdpailleux@${m} "cd ${DEST_DIR}; tar -xzvf gromacs.tar.gz; tar -xzvf nsimd.tar.gz; rm *.tar.gz" #
   
   NSIMD_PATH=$(ssh jdpailleux@${m} "cd ${DEST_DIR}/nsimd/; pwd")
 

@@ -60,15 +60,22 @@
 #undef GMX_SIMD_X86_SSE4_1
 #define GMX_SIMD_X86_SSE4_1 1
 #include "gromacs/simd/impl_x86_sse4_1/impl_x86_sse4_1_simd4_float.h"
-
 #undef GMX_SIMD_X86_SSE4_1
 #define GMX_SIMD_X86_SSE4_1 0
 
-#elif defined(NSIMD_AVX2)
-#include "gromacs/simd/impl_x86_avx2_256/impl_x86_avx2_256_simd4_float.h"
-
 #elif defined(NSIMD_AVX)
+#undef GMX_SIMD_X86_AVX_256
+#define GMX_SIMD_X86_AVX_256 1
 #include "gromacs/simd/impl_x86_avx_256/impl_x86_avx_256_simd4_float.h"
+#undef GMX_SIMD_X86_AVX_256
+#define GMX_SIMD_X86_AVX_256 0
+
+#elif defined(NSIMD_AVX2)
+#undef GMX_SIMD_X86_AVX2_256
+#define GMX_SIMD_X86_AVX2_256 1
+#include "gromacs/simd/impl_x86_avx2_256/impl_x86_avx2_256_simd4_float.h"
+#undef GMX_SIMD_X86_AVX2_256
+#define GMX_SIMD_X86_AVX2_256 0
 
 #elif defined(NSIMD_AVX512_KNL) 
 #undef GMX_SIMD_X86_AVX_512_KNL
