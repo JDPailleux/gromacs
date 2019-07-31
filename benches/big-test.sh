@@ -44,20 +44,21 @@ for m in ${MACHINES}; do
     rm -rf gromacs/
   fi
 
-  if [ -d "nsimd/" ]; then
-    rm -rf nsimd/
-  fi
+  # if [ -d "nsimd/" ]; then
+  #   rm -rf nsimd/
+  # fi
 
   (git clone git@github.com:agenium-scale/gromacs.git)
-  (git clone ssh://git@phabricator2.numscale.com/diffusion/67/nsimd.git)
+  # (git clone ssh://git@phabricator2.numscale.com/diffusion/67/nsimd.git)
   
-  Create gromacs and nsimd archives
+  ## Create gromacs and nsimd archives
   tar -cvzf gromacs.tar.gz gromacs/
-  tar -cvzf nsimd.tar.gz nsimd/
+  # tar -cvzf nsimd.tar.gz nsimd/
 
   scp gromacs.tar.gz jdpailleux@${m}:${DEST_DIR}
-  scp nsimd.tar.gz jdpailleux@${m}:${DEST_DIR}
-  ssh jdpailleux@${m} "cd ${DEST_DIR}; tar -xzvf gromacs.tar.gz; tar -xzvf nsimd.tar.gz; rm *.tar.gz" #
+  # scp nsimd.tar.gz jdpailleux@${m}:${DEST_DIR}
+  # ssh jdpailleux@${m} "cd ${DEST_DIR}; tar -xzvf gromacs.tar.gz; tar -xzvf nsimd.tar.gz; rm *.tar.gz" 
+  ssh jdpailleux@${m} "cd ${DEST_DIR}; tar -xzvf gromacs.tar.gz; rm *.tar.gz" 
   
   NSIMD_PATH=$(ssh jdpailleux@${m} "cd ${DEST_DIR}/nsimd/; pwd")
 
@@ -81,7 +82,7 @@ for m in ${MACHINES}; do
       echo "==> Benches ${SIMD}"
       ssh jdpailleux@${m} """cd ${DEST_DIR}/gromacs/build; 
       cd ../benches;
-      python3 do-benches.py --simd=${SIMD};"""
+      python3 do-benches.py --simd=${SIMD} --nsimd_path=${GMX_NSIMD_PATH};"""
           
     done
 
