@@ -1114,15 +1114,18 @@ SimdFInt32 fastMultiply(SimdFInt32 x)
 {
     if (n == 2)
     {
-        return _mm512_slli_epi32(x.simdInternal_.native_register(), 1);
+        nsimd::shl(x.simdInternal_, 1);
+	    // return _mm512_slli_epi32(x.simdInternal_.native_register(), 1);
     }
     else if (n == 4)
     {
-        return _mm512_slli_epi32(x.simdInternal_.native_register(), 2);
+	    nsimd::shl(x.simdInternal_, 2);
+	    // return _mm512_slli_epi32(x.simdInternal_.native_register(), 2);
     }
     else if (n == 8)
     {
-        return _mm512_slli_epi32(x.simdInternal_.native_register(), 3);
+        nsimd::shl(x.simdInternal_, 3);
+	    // return _mm512_slli_epi32(x.simdInternal_.native_register(), 3);
     }
     else
     {

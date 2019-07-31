@@ -47,6 +47,7 @@
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
 
+#include "impl_nsimd_general.h"
 #include "impl_nsimd_simd_float.h"
 #include "gromacs/math/utilities.h"
 
@@ -66,6 +67,20 @@ class SimdDouble
         nsimd::pack<double> simdInternal_;
 };
 
+#if (defined(NSIMD_AVX512_SKYLAKE) || defined(NSIMD_AVX512_KNL))
+
+class SimdDBool
+{
+    public:
+        SimdDBool() {}
+
+        // Internal utility constructor to simplify return statements
+        SimdDBool(__mmask8 simd) : simdInternal_(simd) {}
+
+        __mmask8  simdInternal_;
+};
+
+#else
 class SimdDBool
 {
     public:
@@ -78,6 +93,7 @@ class SimdDBool
 
         nsimd::pack<double> simdInternal_;
 };
+#endif
 
 #include "impl_nsimd_simd_double_defined.h"
 
@@ -118,6 +134,8 @@ setZeroD()
 }
 
 
+#if (!defined(NSIMD_AVX512_SKYLAKE) && !defined(NSIMD_AVX512_KNL))
+
 static inline SimdDBool gmx_simdcall
 operator&&(SimdDBool a, SimdDBool b)
 {
@@ -133,44 +151,7 @@ operator||(SimdDBool a, SimdDBool b)
                a.simdInternal_ | b.simdInternal_
     };
 }
-
-
-// static inline SimdDBool gmx_simdcall
-// operator==(SimdDouble a, SimdDouble b)
-// {
-//     nsimd::pack<double> ffff = nsimd::reinterpret<nsimd::pack<double>>(nsimd::set1<nsimd::pack<unsigned long>>(-1ul));
-//     return {
-//                nsimd::if_else1(a.simdInternal_== b.simdInternal_, ffff, nsimd::set1<nsimd::pack<double>>(0.0))
-//     };
-// }
-
-// static inline SimdDBool gmx_simdcall
-// operator!=(SimdDouble a, SimdDouble b)
-// {
-//     nsimd::pack<double> ffff = nsimd::reinterpret<nsimd::pack<double>>(nsimd::set1<nsimd::pack<unsigned long>>(-1ul));
-//     return {
-//                nsimd::if_else1(a.simdInternal_!= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(ffff), nsimd::set1<nsimd::pack<double>>(0.0))
-//     };
-// }
-
-// static inline SimdDBool gmx_simdcall
-// operator<(SimdDouble a, SimdDouble b)
-// {
-//     nsimd::pack<double> ffff = nsimd::reinterpret<nsimd::pack<double>>(nsimd::set1<nsimd::pack<unsigned long>>(-1ul));
-//     return {
-//                nsimd::if_else1(a.simdInternal_< b.simdInternal_, nsimd::set1<nsimd::pack<double>>(ffff), nsimd::set1<nsimd::pack<double>>(0.0))
-//     };
-// }
-
-// static inline SimdDBool gmx_simdcall
-// operator<=(SimdDouble a, SimdDouble b)
-// {
-//     nsimd::pack<double> ffff = nsimd::reinterpret<nsimd::pack<double>>(nsimd::set1<nsimd::pack<unsigned long>>(-1ul));
-//     return {
-//                nsimd::if_else1(a.simdInternal_<= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(ffff), nsimd::set1<nsimd::pack<double>>(0.0))
-//     };
-// }
-
+#endif
 
 static inline SimdDouble gmx_simdcall
 operator&(SimdDouble a, SimdDouble b)
@@ -255,6 +236,8 @@ rcp(SimdDouble x)
     };
 }
 
+#if (!defined(NSIMD_AVX512_SKYLAKE) && !defined(NSIMD_AVX512_KNL))
+
 static inline SimdDouble gmx_simdcall
 maskAdd(SimdDouble a, SimdDouble b, SimdDBool m)
 {
@@ -300,6 +283,7 @@ maskzRcp(SimdDouble x, SimdDBool m)
                nsimd::rec11(x.simdInternal_) & m.simdInternal_
     };
 }
+#endif
 
 static inline SimdDouble gmx_simdcall
 abs(SimdDouble x)
@@ -341,6 +325,7 @@ trunc(SimdDouble x)
     };
 }
 
+#if (!defined(NSIMD_AVX512_SKYLAKE) && !defined(NSIMD_AVX512_KNL))
 static inline SimdDouble gmx_simdcall
 selectByMask(SimdDouble a, SimdDBool mask)
 {
@@ -356,15 +341,9 @@ selectByNotMask(SimdDouble a, SimdDBool mask)
                nsimd::andnotb(a.simdInternal_, mask.simdInternal_)
     };
 }
+#endif
 
-static inline SimdDouble gmx_simdcall
-blend(SimdDouble a, SimdDouble b, SimdDBool sel)
-{
-    return {
-            // nsimd::if_else1(nsimd::cvt<nsimd::packl<double> >(sel.simdInternal_), a.simdInternal_, b.simdInternal_)
-            nsimd::if_else1(nsimd::cvt<nsimd::packl<double> >(sel.simdInternal_), b.simdInternal_, a.simdInternal_)
-    };
-}
+
 
 // static inline bool gmx_simdcall
 // anyTrue(SimdDIBool a) { return nsimd::any(nsimd::loadla<nsimd::packl<int> >(a.simdInternal_)); }

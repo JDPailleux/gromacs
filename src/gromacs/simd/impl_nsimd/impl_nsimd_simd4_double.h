@@ -47,6 +47,8 @@
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
 
+#include "impl_nsimd_general.h"
+
 #if defined(NSIMD_AVX512_KNL) 
 #undef GMX_SIMD_X86_AVX_512_KNL
 #define GMX_SIMD_X86_AVX_512_KNL 1

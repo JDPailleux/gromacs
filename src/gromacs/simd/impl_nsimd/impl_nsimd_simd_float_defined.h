@@ -5,6 +5,7 @@
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
 
+#include "impl_nsimd_general.h"
 #include "impl_nsimd_simd_float.h"
 
 #if (defined(NSIMD_SSE2) || defined(NSIMD_SSE42))
@@ -107,7 +108,6 @@ extract(SimdFInt32 a)
 }
 #endif
 
-
 #elif (defined(NSIMD_AVX2) || defined(NSIMD_AVX))
 
 static inline SimdFloat gmx_simdcall
@@ -190,6 +190,8 @@ cvttR2I(SimdFloat a)
                _mm256_cvttps_epi32(a.simdInternal_.native_register())
     };
 }
+
+
 #elif (defined(NSIMD_AVX512_KNL) || defined(NSIMD_AVX512_SKYLAKE))
 
 static inline SimdFloat gmx_simdcall
@@ -244,7 +246,16 @@ cvttR2I(SimdFloat a)
     };
 }
 
-#elif (defined(NSIMD_AARCH64) || defined(NSIMD_NEON128))
+static inline SimdFloat gmx_simdcall
+copysign(SimdFloat a, SimdFloat b)
+{
+    return {
+               _mm512_castsi512_ps(_mm512_ternarylogic_epi32(
+                                           _mm512_castps_si512(a.simdInternal_.native_register()),
+                                           _mm512_castps_si512(b.simdInternal_.native_register()),
+                                           _mm512_set1_epi32(INT32_MIN), 0xD8))
+    };
+}
 
 static inline SimdFloat gmx_simdcall
 frexp(SimdFloat value, SimdFInt32 * exponent)
@@ -323,7 +334,7 @@ cvttR2I(SimdFloat a)
 {
     return {
                vcvtq_s32_f32(a.simdInternal_.native_register())
-               // nsimd::cvt<nsimd::pack<int>>(a;simdInternal_)
+               // nsimd::cvt<nsimd::pack<int>>(a.simdInternal_)
     };
 }
 

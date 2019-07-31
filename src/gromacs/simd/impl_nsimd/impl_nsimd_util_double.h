@@ -49,6 +49,7 @@
 #include "gromacs/utility/basedefinitions.h"
 
 #include "impl_nsimd_simd_double.h"
+#include "impl_nsimd_general.h"
 
 namespace gmx
 {

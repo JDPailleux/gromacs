@@ -48,7 +48,7 @@
 #include <nsimd/nsimd.h>
 
 #include "gromacs/math/utilities.h"
-
+#include "impl_nsimd_general.h"
 
 namespace gmx
 {
@@ -549,6 +549,7 @@ selectByNotMask(SimdFloat a, SimdFBool mask)
     };
 }
 
+
 static inline SimdFloat gmx_simdcall
 blend(SimdFloat a, SimdFloat b, SimdFBool sel)
 {
@@ -589,6 +590,7 @@ operator||(SimdFIBool a, SimdFIBool b)
     };
 }
 
+
 static inline bool gmx_simdcall
 anyTrue(SimdFIBool a) { return nsimd::any(nsimd::cvt<nsimd::packl<int> >(a.simdInternal_)); }
 
@@ -607,6 +609,7 @@ selectByNotMask(SimdFInt32 a, SimdFIBool mask)
                nsimd::andnotb(a.simdInternal_, mask.simdInternal_)
     };
 }
+
 
 static inline SimdFInt32 gmx_simdcall
 blend(SimdFInt32 a, SimdFInt32 b, SimdFIBool sel)

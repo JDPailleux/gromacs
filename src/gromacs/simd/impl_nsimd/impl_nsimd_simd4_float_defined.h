@@ -12,6 +12,7 @@
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
 
+#include "impl_nsimd_general.h"
 #include "impl_nsimd_simd4_float_defined.h"
 
 namespace gmx

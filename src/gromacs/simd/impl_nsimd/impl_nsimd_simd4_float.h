@@ -47,7 +47,7 @@
 #include <nsimd/nsimd.h>
 
 // #include "impl_nsimd_simd4_float_defined.h"
-
+#include "impl_nsimd_general.h"
 
 #if defined(NSIMD_SSE2)
 #undef GMX_SIMD_X86_SSE2

@@ -40,58 +40,18 @@
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
 
-namespace gmx
-{
-
 #if (defined(NSIMD_SSE2) || defined(NSIMD_SSE42) || \
      defined(NSIMD_AVX) || defined(NSIMD_AVX2))
-static inline void 
-simdPrefetch(void *m) {
-  _mm_prefetch(reinterpret_cast<const char *>(m), _MM_HINT_T0);
-}
+#include "gromacs/simd/impl_x86_sse2/impl_x86_sse2_general.h"
 
 #elif (defined(NSIMD_AVX512_KNL) || defined(NSIMD_AVX512_SKYLAKE))
 
-static inline void 
-simdPrefetch(void *m) {
-  _mm_prefetch(reinterpret_cast<const char *>(m), _MM_HINT_T0);
-}
-/*! \brief Return integer from AVX-512 mask
- *
- *  \param m  Mask suitable for use with AVX-512 instructions
- *
- *  \return Short integer representation of mask
- */
-static inline short
-avx512Mask2Int(__mmask16 m)
-{
-    return static_cast<short>(m);
-}
-
-/*! \brief Return AVX-512 mask from integer
- *
- *  \param m  Short integer
- *
- *  \return Mask suitable for use with AVX-512 instructions.
- */
-static inline __mmask16
-avx512Int2Mask(short i)
-{
-    return static_cast<__mmask16>(i);
-}
+#include "gromacs/simd/impl_x86_avx_512/impl_x86_avx_512_general.h"
 
 #else 
 
-static inline void
-simdPrefetch(void * m)
-{
-#ifdef __GNUC__
-    __builtin_prefetch(m);
-#endif
-}
-
+#include "gromacs/simd/impl_arm_neon/impl_arm_neon_general.h"
 
 #endif
-}      // namespace gmx
 
 #endif // GMX_SIMD_IMPL_NSIMD_GENERAL_H

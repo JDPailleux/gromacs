@@ -5,6 +5,8 @@
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
 
+#include "impl_nsimd_general.h"
+
 #if (defined(NSIMD_SSE2) || defined(NSIMD_SSE42))
 
 class SimdDInt32
@@ -295,6 +297,9 @@ anyTrue(SimdDIBool a)
     return _mm_movemask_epi8(_mm_shuffle_epi32(a.simdInternal_.native_register(), _MM_SHUFFLE(1, 0, 1, 0))) != 0;
 }
 
+static inline bool gmx_simdcall
+anyTrue(SimdDBool a) { return _mm_movemask_pd(a.simdInternal_.native_register()) != 0; }
+
 static inline SimdDInt32 gmx_simdcall
 selectByMask(SimdDInt32 a, SimdDIBool mask)
 {
@@ -518,6 +523,9 @@ testBits(SimdDouble a)
 
 static inline bool gmx_simdcall
 anyTrue(SimdDIBool a) { return _mm_movemask_epi8(a.simdInternal_) != 0; }
+
+static inline bool gmx_simdcall
+anyTrue(SimdDBool a) { return _mm256_movemask_pd(a.simdInternal_.native_register()) != 0; }
 
 static inline SimdDInt32 gmx_simdcall
 operator&(SimdDInt32 a, SimdDInt32 b)
@@ -963,6 +971,12 @@ anyTrue(SimdDIBool a)
     return ( avx512Mask2Int(a.simdInternal_) & 0xFF) != 0;
 }
 
+static inline bool gmx_simdcall
+anyTrue(SimdDBool a)
+{
+    return ( avx512Mask2Int(a.simdInternal_) != 0);
+}
+
 static inline SimdDBool gmx_simdcall
 operator==(SimdDouble a, SimdDouble b)
 {
@@ -995,19 +1009,51 @@ operator<=(SimdDouble a, SimdDouble b)
     };
 }
 
-static inline SimdDouble gmx_simdcall
-selectByMask(SimdDouble a, SimdDBool m)
+
+static inline SimdDouble
+frexp(SimdDouble value, SimdDInt32 * exponent)
 {
+    __m512d rExponent = _mm512_getexp_pd(value.simdInternal_.native_register());
+    __m256i iExponent = _mm512_cvtpd_epi32(rExponent);
+
+    exponent->simdInternal_ = _mm256_add_epi32(iExponent, _mm256_set1_epi32(1));
+
     return {
-               _mm512_mask_mov_pd(_mm512_setzero_pd(), m.simdInternal_.native_register(), a.simdInternal_.native_register())
+               _mm512_getmant_pd(value.simdInternal_.native_register(), _MM_MANT_NORM_p5_1, _MM_MANT_SIGN_src)
     };
 }
 
+template <MathOptimization opt = MathOptimization::Safe>
+static inline SimdDouble
+ldexp(SimdDouble value, SimdDInt32 exponent)
+{
+    const __m256i exponentBias = _mm256_set1_epi32(1023);
+    __m256i       iExponent    = _mm256_add_epi32(exponent.simdInternal_, exponentBias);
+    __m512i       iExponent512;
+
+    if (opt == MathOptimization::Safe)
+    {
+        // Make sure biased argument is not negative
+        iExponent = _mm256_max_epi32(iExponent, _mm256_setzero_si256());
+    }
+
+    iExponent512 = _mm512_permutexvar_epi32(_mm512_set_epi32(7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0), _mm512_castsi256_si512(iExponent));
+    iExponent512 = _mm512_mask_slli_epi32(_mm512_setzero_epi32(), avx512Int2Mask(0xAAAA), iExponent512, 20);
+    return {
+	    _mm512_mul_pd(_mm512_castsi512_pd(iExponent512), value.simdInternal_.native_register())
+	};
+}
+
+
+
 static inline SimdDouble gmx_simdcall
-selectByNotMask(SimdDouble a, SimdDBool m)
+copysign(SimdDouble a, SimdDouble b)
 {
     return {
-               _mm512_mask_mov_pd(a.simdInternal_.native_register(), m.simdInternal_.native_register(), _mm512_setzero_pd())
+               _mm512_castsi512_pd(_mm512_ternarylogic_epi64(
+                                           _mm512_castpd_si512(a.simdInternal_.native_register()),
+                                           _mm512_castpd_si512(b.simdInternal_.native_register()),
+                                           _mm512_set1_epi64(INT64_MIN), 0xD8))
     };
 }
 
@@ -1016,6 +1062,14 @@ blend(SimdDInt32 a, SimdDInt32 b, SimdDIBool sel)
 {
     return {
                _mm512_castsi512_si256(_mm512_mask_blend_epi32(sel.simdInternal_, _mm512_castsi256_si512(a.simdInternal_), _mm512_castsi256_si512(b.simdInternal_)))
+    };
+}
+
+static inline SimdDouble gmx_simdcall
+blend(SimdDouble a, SimdDouble b, SimdDBool sel)
+{
+    return {
+               _mm512_mask_blend_pd(sel.simdInternal_, a.simdInternal_.native_register(), b.simdInternal_.native_register())
     };
 }
 
@@ -1047,7 +1101,7 @@ static inline SimdDIBool gmx_simdcall
 cvtB2IB(SimdDBool a)
 {
     return {
-               a.simdInternal_.native_register()
+              a.simdInternal_
     };
 }
 
@@ -1075,6 +1129,100 @@ cvtDD2F(SimdDouble d0, SimdDouble d1)
                _mm512_shuffle_f32x4(f0, f1, 0x44)
     };
 }
+
+//------------------
+
+static inline SimdDBool gmx_simdcall
+operator&&(SimdDBool a, SimdDBool b)
+{
+    return {
+               static_cast<__mmask8>(_mm512_kand(a.simdInternal_, b.simdInternal_))
+    };
+}
+
+static inline SimdDBool gmx_simdcall
+operator||(SimdDBool a, SimdDBool b)
+{
+    return {
+               static_cast<__mmask8>(_mm512_kor(a.simdInternal_, b.simdInternal_))
+    };
+}
+
+static inline SimdDouble gmx_simdcall
+selectByMask(SimdDouble a, SimdDBool m)
+{
+    return {
+               _mm512_mask_mov_pd(_mm512_setzero_pd(), m.simdInternal_, a.simdInternal_.native_register())
+    };
+}
+
+static inline SimdDouble gmx_simdcall
+selectByNotMask(SimdDouble a, SimdDBool m)
+{
+    return {
+               _mm512_mask_mov_pd(a.simdInternal_.native_register(), m.simdInternal_, _mm512_setzero_pd())
+    };
+}
+
+static inline SimdDouble gmx_simdcall
+maskAdd(SimdDouble a, SimdDouble b, SimdDBool m)
+{
+    return {
+               _mm512_mask_add_pd(a.simdInternal_.native_register(), m.simdInternal_, a.simdInternal_.native_register(), b.simdInternal_.native_register())
+    };
+}
+
+static inline SimdDouble gmx_simdcall
+maskzMul(SimdDouble a, SimdDouble b, SimdDBool m)
+{
+    return {
+               _mm512_maskz_mul_pd(m.simdInternal_, a.simdInternal_.native_register(), b.simdInternal_.native_register())
+    };
+}
+
+static inline SimdDouble gmx_simdcall
+maskzFma(SimdDouble a, SimdDouble b, SimdDouble c, SimdDBool m)
+{
+    return {
+               _mm512_maskz_fmadd_pd(m.simdInternal_, a.simdInternal_.native_register(), b.simdInternal_.native_register(), c.simdInternal_.native_register())
+    };
+}
+
+
+#if defined(NSIMD_AVX512_SKYLAKE)
+static inline SimdDouble gmx_simdcall
+maskzRsqrt(SimdDouble x, SimdDBool m)
+{
+    return {
+               _mm512_maskz_rsqrt14_pd(m.simdInternal_, x.simdInternal_.native_register())
+    };
+}
+
+static inline SimdDouble gmx_simdcall
+maskzRcp(SimdDouble x, SimdDBool m)
+{
+    return {
+               _mm512_maskz_rcp14_pd(m.simdInternal_, x.simdInternal_.native_register())
+    };
+}
+#else 
+
+static inline SimdDouble gmx_simdcall
+maskzRsqrt(SimdDouble x, SimdDBool m)
+{
+    return {
+               _mm512_maskz_rsqrt28_pd(m.simdInternal_, x.simdInternal_.native_register())
+    };
+}
+
+static inline SimdDouble gmx_simdcall
+maskzRcp(SimdDouble x, SimdDBool m)
+{
+    return {
+               _mm512_maskz_rcp28_pd(m.simdInternal_, x.simdInternal_.native_register())
+    };
+}
+#endif
 
 #elif defined(NSIMD_AARCH64)
 
@@ -1176,6 +1324,12 @@ static inline bool gmx_simdcall
 anyTrue(SimdDIBool a)
 {
     return (vmaxv_u32(a.simdInternal_) != 0);
+}
+
+static inline bool gmx_simdcall
+anyTrue(SimdDBool a)
+{
+    return (vmaxvq_u32((uint32x4_t)(a.simdInternal_.native_register())) != 0);
 }
 
 static inline SimdDInt32 gmx_simdcall
