@@ -124,7 +124,7 @@ For each SIMD extensions used, the following benchmarks are performed:
 
 \\subsection{Information about the standard library}
 \\begin{lstlisting}[frame=single] 
-""" + lld + r"""
+""" + ldd + r"""
 \\end{lstlisting}\n"""
   return intro
 
