@@ -64,34 +64,32 @@ for m in ${MACHINES}; do
 
     # Depending on which machine we are, set GMX_SIMD flags properly
     if [ "${m}" = "camelot" ]; then
-      GMX_SIMD="SSE2 SSE4.1 AVX_256"
+      GMX_SIMD="AVX_256"
     elif [ "${m}" = "benoic" ]; then
-      GMX_SIMD="SSE2 SSE4.1 AVX_256"
+      GMX_SIMD="AVX_256"
     elif [ "${m}" = "glastonbury" ]; then
-      GMX_SIMD="SSE2 SSE4.1 AVX_256 AVX2_256 AVX_512"
+      GMX_SIMD="AVX_512"
     elif [ "${m}" = "gaunes" ]; then
-      GMX_SIMD="SSE2 SSE4.1 AVX_256 AVX2_256"
+      GMX_SIMD="AVX2_256"
     else
-      GMX_SIMD="SSE2 SSE4.1 AVX_256"
+      GMX_SIMD="AVX_256"
     fi
-
     ssh jdpailleux@${m} "mkdir -p ${DEST_DIR}/gromacs/build;"
    
     # Compilation and benches
-    for SIMD in ${GMX_SIMD}; do
-      echo "==> Benches ${SIMD}"
-      ssh jdpailleux@${m} """cd ${DEST_DIR}/gromacs/build; 
-      cd ../benches;
-      python3 do-benches.py --simd=${SIMD} --nsimd_path=${GMX_NSIMD_PATH};"""
-          
-    done
+    echo "==> Benches ${GMX_SIMD}"
+    ssh jdpailleux@${m} """cd ${DEST_DIR}/gromacs/build; 
+    cd ../benches;
+    python3 do-benches.py --simd=${GMX_SIMD} --nsimd_path=${GMX_NSIMD_PATH};"""
+         
+ 
 
     # Compilation and benches for NSIMD
-    GMX_NSIMD_PATH="${NSIMD_PATH}"
-    echo "==> Benches NSIMD"
-    ssh jdpailleux@${m}  """ cd ${DEST_DIR}/gromacs/build; 
-    cd ../scripts;
-    python3 do-benches.py --simd=nsimd --nsimd_path=${GMX_NSIMD_PATH}; """
+    # GMX_NSIMD_PATH="${NSIMD_PATH}"
+    # echo "==> Benches NSIMD"
+    # ssh jdpailleux@${m}  """ cd ${DEST_DIR}/gromacs/build; 
+    # cd ../scripts;
+    # python3 do-benches.py --simd=nsimd --nsimd_path=${GMX_NSIMD_PATH}; """
     
   exit
 
