@@ -256,7 +256,8 @@ copysign(SimdFloat a, SimdFloat b)
                                            _mm512_set1_epi32(INT32_MIN), 0xD8))
     };
 }
-
+ 
+#elif (defined(NSIMD_AARCH64) || defined(NSIMD_ARM_NEON))
 static inline SimdFloat gmx_simdcall
 frexp(SimdFloat value, SimdFInt32 * exponent)
 {
