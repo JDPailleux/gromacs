@@ -145,6 +145,14 @@ ldexp(SimdDouble value, SimdDInt32 exponent)
                _mm_mul_pd(value.simdInternal_.native_register(), _mm_castsi128_pd(iExponent))
     };
 }
+
+static inline SimdDouble gmx_simdcall
+blend(SimdDouble a, SimdDouble b, SimdDBool sel)
+{
+    return {
+               _mm_or_pd(_mm_andnot_pd(sel.simdInternal_.native_register(), a.simdInternal_.native_register()), _mm_and_pd(sel.simdInternal_.native_register(), b.simdInternal_.native_register()))
+    };
+}
 #else
 
 template <MathOptimization opt = MathOptimization::Safe>
@@ -170,6 +178,13 @@ ldexp(SimdDouble value, SimdDInt32 exponent)
     };
 }
 
+static inline SimdDouble gmx_simdcall
+blend(SimdDouble a, SimdDouble b, SimdDBool sel)
+{
+    return {
+               _mm_blendv_pd(a.simdInternal_.native_register(), b.simdInternal_.native_register(), sel.simdInternal_.native_register())
+    };
+}
 #endif
 
 static inline SimdDInt32 gmx_simdcall
@@ -787,6 +802,13 @@ selectByNotMask(SimdDInt32 a, SimdDIBool mask)
     };
 }
 
+static inline SimdDouble gmx_simdcall
+blend(SimdDouble a, SimdDouble b, SimdDBool sel)
+{
+    return {
+               _mm256_blendv_pd(a.simdInternal_.native_register(), b.simdInternal_.native_register(), sel.simdInternal_.native_register())
+    };
+}
 #elif (defined(NSIMD_AVX512_KNL) || defined(NSIMD_AVX512_SKYLAKE))
 
 class SimdDInt32
@@ -1426,6 +1448,14 @@ blend(SimdDInt32 a, SimdDInt32 b, SimdDIBool sel)
 {
     return {
                vbsl_s32(sel.simdInternal_, b.simdInternal_, a.simdInternal_)
+    };
+}
+
+static inline SimdDouble gmx_simdcall
+blend(SimdDouble a, SimdDouble b, SimdDBool sel)
+{
+    return {
+               vbslq_f64(sel.simdInternal_, b.simdInternal_, a.simdInternal_)
     };
 }
 
