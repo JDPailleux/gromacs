@@ -1,0 +1,35 @@
+diff --git a/build.nsconfig b/build.nsconfig
+index 666b515..7e089f2 100644
+--- a/build.nsconfig
++++ b/build.nsconfig
+@@ -136,7 +136,7 @@ build_file libnsimd_aarch64%so autodeps %base_files% api_cpu%o api_aarch64%o \
+ 
+ ## Tests
+ 
+-[L] find_lib mpfr = mpfr.h mpfr %extern_dir%
++[L] find_lib optional mpfr = mpfr.h mpfr %extern_dir%
+ [W] set mpfr_flags = ""
+ 
+ set tests_flags = %flags% %mpfr_flags% %{cflags_for_%simd%} \
+@@ -144,7 +144,7 @@ set tests_flags = %flags% %mpfr_flags% %{cflags_for_%simd%} \
+ 
+ echo Test compilation flags: %tests_flags%
+ 
+-build_files tests. c89 .c89%exe foreach glob:%root_public%/tests/*.c \
++build_files optional tests. c89 .c89%exe foreach glob:%root_public%/tests/*.c \
+                                 autodeps libnsimd_%{arch_for_%simd}%so%
+ 	cc -std=c89 $in %tests_flags% -o $out
+ 
+@@ -174,9 +174,9 @@ phony ulps deps %ulps_files%
+ 
+ ## Benches
+ 
+-find_lib sleef = sleef.h sleef %extern_dir%
+-find_lib benchmark = benchmark/benchmark.h benchmark %extern_dir%
+-find_header benchmark_includes = benchmark/benchmark.h %extern_dir%/include
++find_lib optional sleef = sleef.h sleef %extern_dir%
++find_lib optional benchmark = benchmark/benchmark.h benchmark %extern_dir%
++find_header optional benchmark_includes = benchmark/benchmark.h %extern_dir%/include
+ 
+ set benches_sflags  = %{cflags_for_%simd%} -I%root_public%/include -O3 -DNDEBUG
+ set benches_cflags  = %{cflags_for_%simd%} %flags%
