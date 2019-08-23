@@ -65,7 +65,7 @@ elseif(${GMX_SUGGESTED_SIMD} STREQUAL "AVX_512_KNL")
   set(NSIMD_LINKER_FLAGS "-L${GMX_NSIMD_ROOT}/build -lnsimd_x86_64")
 
 elseif(${GMX_SUGGESTED_SIMD} STREQUAL "AVX_512")
-  set(NSIMD_COMPILE_FLAGS "-DAVX512_SKYLAKE -mavx512f -mfma")
+  set(NSIMD_COMPILE_FLAGS "-DAVX512_SKYLAKE -mavx512f -mavx512dq -mavx512cd -mavx512bw -mavx512vl -mfma")
   find_library(NSIMD_LIBRARY "libnsimd_x86_64")
   set(NSIMD_LINKER_FLAGS "-L${GMX_NSIMD_ROOT}/build -lnsimd_x86_64")
 
