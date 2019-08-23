@@ -1127,10 +1127,7 @@ SimdFInt32 fastMultiply(SimdFInt32 x)
         nsimd::shl(x.simdInternal_, 3);
 	    // return _mm512_slli_epi32(x.simdInternal_.native_register(), 3);
     }
-    else
-    {
-        return x * n;
-    }
+    return x * n;
 }
 
 template<int align>

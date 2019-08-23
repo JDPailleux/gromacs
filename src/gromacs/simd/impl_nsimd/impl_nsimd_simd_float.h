@@ -531,7 +531,7 @@ operator||(SimdFBool a, SimdFBool b)
 }
 
 static inline bool gmx_simdcall
-anyTrue(SimdFBool a) { return nsimd::any(nsimd::cvt<nsimd::packl<float> >(a.simdInternal_)); }
+anyTrue(SimdFBool a) { return nsimd::any(nsimd::ne(nsimd::pack<float>(0), a.simdInternal_)); }
 
 static inline SimdFloat gmx_simdcall
 selectByMask(SimdFloat a, SimdFBool mask)
@@ -554,7 +554,7 @@ static inline SimdFloat gmx_simdcall
 blend(SimdFloat a, SimdFloat b, SimdFBool sel)
 {
     return {
-            nsimd::if_else1(nsimd::cvt<nsimd::packl<float>>(sel.simdInternal_), b.simdInternal_, a.simdInternal_)
+            nsimd::if_else1(nsimd::ne(nsimd::pack<float>(0), sel.simdInternal_), b.simdInternal_, a.simdInternal_)
     };
 }
 
@@ -592,7 +592,7 @@ operator||(SimdFIBool a, SimdFIBool b)
 
 
 static inline bool gmx_simdcall
-anyTrue(SimdFIBool a) { return nsimd::any(nsimd::cvt<nsimd::packl<int> >(a.simdInternal_)); }
+anyTrue(SimdFIBool a) { return nsimd::any(nsimd::ne(nsimd::pack<int>(0), a.simdInternal_)); }
 
 static inline SimdFInt32 gmx_simdcall
 selectByMask(SimdFInt32 a, SimdFIBool mask)
@@ -615,7 +615,7 @@ static inline SimdFInt32 gmx_simdcall
 blend(SimdFInt32 a, SimdFInt32 b, SimdFIBool sel)
 {
     return {
-            nsimd::if_else1(nsimd::cvt<nsimd::packl<int> >(sel.simdInternal_), b.simdInternal_, a.simdInternal_)
+            nsimd::if_else1(nsimd::ne(nsimd::pack<int>(0), sel.simdInternal_), b.simdInternal_, a.simdInternal_)
     };
 }
 
