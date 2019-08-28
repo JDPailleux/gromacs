@@ -14,7 +14,7 @@
 \usepackage{fancyhdr}
 \usepackage{pgf}
 \usepackage{pgffor}
-
+\usepackage{mdframed}
 
 % Utilisation de la police sans-serif ("Computer Modern Sans") pour la police roman
 \renewcommand{\rmdefault}{\sfdefault}
@@ -70,12 +70,13 @@
 \newcommand{\gromacs}{GROMACS}
 \newcommand{\nsimd}{NSIMD}
 \newcommand{\cpu}{CPU}
+\newcommand{\ageniumscale}{AGENIUM SCALE}
 
 \begin{document}
 \maketitle%
 \vspace*{\fill}%
 \noindent%
-\textbf{AGENIUM SCALE}\\
+\textbf{\ageniumscale{}}\\
 Rue Noetzlin\\
 Batiment 660, Digiteo Labs\\
 91 190 Gif-sur-Yvette\\
@@ -92,7 +93,21 @@ Batiment 660, Digiteo Labs\\
 \subsection*{About}%
 \label{sec:about}
 
-This document is a \textbf{technical} report of the \gromacs{} benchmarks performed by AGNENIUM SCALE on an Intel Skylake AVX-512 capable \cpu. The aim is to give a quick idea of how vector code using \nsimd{} performs against other versions.
+This document is a \textbf{technical} report of the \gromacs{} benchmarks performed by \ageniumscale{} on an Intel Skylake AVX-512 capable \cpu. The aim is to give a quick idea of how vector code using \nsimd{} performs against other versions.
+
+\begin{mdframed}{
+    \textbf{Disclaimer}
+
+    The document was automatically generated on \today. No human was involved in running the benchmarks. There are many benchmarks and not all of them can be checked by a human. Therefore if you find weird results, fell free to contact \ageniumscale{} at \href{mailto://contact@numscale.com}{contact@numscale.com}. If you want us to run benchmarks on a machine you own, feel free to contact us at \href{mailto://contact@numscale.com}{contact@numscale.com} to see whether and how we can help you.
+
+    This document is meant to be read by software developers. The explanations provided in the following sections are not intended to be detailed. We assume that the reader has the knowledge required to understand the present document. If you have any relevant question feel free to contact us at \href{mailto://contact@numscale.com}{contact@numscale.com}.
+
+    All the information, including technical and engineering data, processes, and results, presented in this document has been prepared carefully in order to present an accurate vision of NSIMD's performance. However, the reader is informed that the hardware and software environment may affect NSIMD's performance and present results that are distinct from those presented herein.
+
+    Thus, \ageniumscale{} does not guarantee in any way the accuracy or completeness of the results presented, which are provided for illustrative purposes only. The terms used in this document shall not be construed as offering any guarantee of result, purpose, and more generally no warranty of any kind.
+
+    For more details on our commitments, we refer you to the NSIMD license agreement which sets out the scope of our commitments.
+}\end{mdframed}
 
 \section{Setup}%
 \label{sec:setup}
@@ -131,7 +146,7 @@ Each comparison requires specific \gromacs{} binaries that have been tailored fo
 
 \section{Benchmarks}
 
-\foreach \ext in {sse2,sse42,avx,avx2,avx512}{
+\foreach \ext in {sse2,sse42,avx,avx2,avx512-skylake}{
   \IfFileExists{../results/\ext-compiler.info}{%
     \pgfkeysgetvalue{/vector/\ext}{\prettyext}%
     \subsection{\prettyext{}}
@@ -151,7 +166,7 @@ Each comparison requires specific \gromacs{} binaries that have been tailored fo
     \lstinputlisting{../results/\ext-ldd.info}
 
     \subsubsection{Intrinsics Performance Report}
-    \lstinputlisting{../results/perf-\ext.out}
+    \lstinputlisting{../results/\ext-perf.out}
 
     \subsubsection{NSIMD for \prettyext{} Performance Report}
     \lstinputlisting{../results/perf-nsimd-\ext.out}
