@@ -1,8 +1,8 @@
 diff --git a/build.nsconfig b/build.nsconfig
-index 666b515..7e089f2 100644
+index c984813..60d6d32 100644
 --- a/build.nsconfig
 +++ b/build.nsconfig
-@@ -136,7 +136,7 @@ build_file libnsimd_aarch64%so autodeps %base_files% api_cpu%o api_aarch64%o \
+@@ -148,7 +148,7 @@ build_file libnsimd_aarch64%so autodeps %base_files% api_cpu%o api_aarch64%o \
  
  ## Tests
  
@@ -11,16 +11,7 @@ index 666b515..7e089f2 100644
  [W] set mpfr_flags = ""
  
  set tests_flags = %flags% %mpfr_flags% %{cflags_for_%simd%} \
-@@ -144,7 +144,7 @@ set tests_flags = %flags% %mpfr_flags% %{cflags_for_%simd%} \
- 
- echo Test compilation flags: %tests_flags%
- 
--build_files tests. c89 .c89%exe foreach glob:%root_public%/tests/*.c \
-+build_files optional tests. c89 .c89%exe foreach glob:%root_public%/tests/*.c \
-                                 autodeps libnsimd_%{arch_for_%simd}%so%
- 	cc -std=c89 $in %tests_flags% -o $out
- 
-@@ -174,9 +174,9 @@ phony ulps deps %ulps_files%
+@@ -189,9 +189,9 @@ phony ulps deps %ulps_files%
  
  ## Benches
  
