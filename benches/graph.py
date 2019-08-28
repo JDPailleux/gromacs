@@ -17,13 +17,13 @@ def read_perf_file(perf_path, items):
                     items[rank] = {"gcycles": gcycles, "nsday": nsday, "stddev": stddev}
 
 if __name__ == "__main__":
-    for ext in ["sse2", "sse42", "avx", "avx2", "avx512"]:
-        ext_perf_path = "perf-" + ext + ".out"
+    for ext in ["sse2", "sse42", "avx", "avx2", "avx512-skylake"]:
+        ext_perf_path =  ext + "-perf.out"
         if not os.path.isfile(ext_perf_path):
             print("I don't have the performance file for", ext, file=sys.stderr)
             continue
 
-        nsimd_ext_perf_path = "perf-nsimd-" + ext + ".out"
+        nsimd_ext_perf_path = "nsimd-" + ext + "-perf.out"
         if not os.path.isfile(nsimd_ext_perf_path):
             print("I don't have the performance file for nsimd-", ext, file=sys.stderr)
             continue
