@@ -1,4 +1,4 @@
-MACHINES_FILE="machines.txt"
+MACHINES_FILE="../machines.txt"
 SETUP_SCRIPT="../setup.sh"
 NSIMD_PATCH="../nsimd.patch"
 
@@ -27,16 +27,18 @@ while read -u 3 -r line; do
         continue
     fi
 
-    IFS=" " read -r SSH_HOST SIMD  <<< $line
+    IFS=" " read -r SSH_HOST SIMD BENCH_ROOT_DIR <<< $line
 
-    echo "${SSH_HOST}"
-    echo "${SIMD}"
+    echo "${SSH_HOST?Could not read ssh host from the ${MACHINES_FILE} file}"
+    echo "${SIMD?Could not read the SIMD configuration from the ${MACHINES_FILE} file}"
 
     # Check root dir for the machine
-    BENCH_ROOT_DIR=$(ssh "${SSH_HOST}" "grep GROMACS_ROOT_DIR ~/.config/gromacs-bench/\$(hostname).sh | cut -d= -f 2")
     if [ "${BENCH_ROOT_DIR}" == "" ]; then
-        print_error "Could not get configuration for host: ${SSH_HOST}"
-        continue
+        BENCH_ROOT_DIR=$(ssh "${SSH_HOST}" "grep GROMACS_ROOT_DIR ~/.config/gromacs-bench/\$(hostname).sh | cut -d= -f 2")
+        if [ "${BENCH_ROOT_DIR}" == "" ]; then
+            print_error "Could not get configuration for host: ${SSH_HOST}"
+            continue
+        fi
     fi
 
     if ! ssh "${SSH_HOST}" "[ -d ${BENCH_ROOT_DIR} ]"; then
@@ -49,11 +51,10 @@ while read -u 3 -r line; do
     rsync "${NSIMD_PATCH}" "${SSH_HOST}:${BENCH_ROOT_DIR}/gromacs" || continue
     # Use a here string to get an interactive shell
     ssh "${SSH_HOST}" <<< "bash ${BENCH_ROOT_DIR}/gromacs/setup.sh autorun ${SIMD}" || continue
-    rsync ${SSH_HOST}:${BENCH_ROOT_DIR}/gromacs/bench/perf-${SIMD}.out . || continue
-    rsync "${SSH_HOST}:${BENCH_ROOT_DIR}/gromacs/bench/*.info" . || continue
+    rsync "${SSH_HOST}:${BENCH_ROOT_DIR}/gromacs/bench/${SIMD}*" . || continue
 done 3< "${MACHINES_FILE}"
 
-
+python3 ../graph.py
 
 
 
