@@ -531,7 +531,12 @@ operator||(SimdFBool a, SimdFBool b)
 }
 
 static inline bool gmx_simdcall
-anyTrue(SimdFBool a) { return nsimd::any(nsimd::ne(nsimd::pack<float>(0), a.simdInternal_)); }
+anyTrue(SimdFBool a)
+{
+    return {
+              (bool) nsimd::any(nsimd::ne(nsimd::reinterpret<nsimd::pack<u32>>(a.simdInternal_), nsimd::pack<u32>(0)))
+    };
+}
 
 static inline SimdFloat gmx_simdcall
 selectByMask(SimdFloat a, SimdFBool mask)
@@ -553,8 +558,8 @@ selectByNotMask(SimdFloat a, SimdFBool mask)
 static inline SimdFloat gmx_simdcall
 blend(SimdFloat a, SimdFloat b, SimdFBool sel)
 {
-    return {
-            nsimd::if_else1(nsimd::ne(nsimd::pack<float>(0), sel.simdInternal_), b.simdInternal_, a.simdInternal_)
+    return SimdFloat {
+            nsimd::if_else1(nsimd::reinterpretl<nsimd::packl<f32>>(nsimd::ne(nsimd::reinterpret<nsimd::pack<u32>>(sel.simdInternal_), nsimd::pack<u32>(0))), b.simdInternal_, a.simdInternal_)
     };
 }
 
