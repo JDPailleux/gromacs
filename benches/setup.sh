@@ -13,10 +13,15 @@ noerror () {
 }
 
 guess_vector_extension () {
-    for EXT in avx512 avx2 avx sse4_2 sse2; do
+    for EXT in avx512f avx2 avx sse4_2 sse2 asimd neon; do
         RET=$(cat /proc/cpuinfo | grep -oE "\<${EXT}\>" | head -n 1)
         if [ "${RET}" != "" ]; then
-            echo "${RET}"
+            case "${RET}" in
+                asimd) echo aarch64;;
+                avx512f) echo avx512-skylake;;
+                sse4_2) echo sse42;;
+                *) echo "${RET}";;
+                esac
             break
         fi
     done
@@ -31,17 +36,17 @@ get_vector_extension () {
                 echo "${1}"
             fi
         else
-            print_error -e "Unsupported SIMD extension: \033[1;31m${1}\033[0m, try one of sse2, sse42, avx, avx2, avx512_skylake, auto."
+            print_error -e "Unsupported SIMD extension: \033[1;31m${1}\033[0m, try one of sse2, sse42, avx, avx2, avx512_skylake, neon, aarch64, auto."
             return 1
         fi
     else
-        print_error "Expects exactly one of (nsimd-)sse2, sse42, avx, avx2, avx512_skylake, auto."
+        print_error "Expects exactly one of (nsimd-)sse2, sse42, avx, avx2, avx512_skylake, neon, aarch64, auto."
         return 1
     fi
 }
 
 vector_extension_supported () {
-    echo "${1}" | grep -Ei "^(nsimd-)?(sse2|sse42|avx|avx2|avx512_skylake|auto)$" 1> /dev/null
+    echo "${1}" | grep -Ei "^(nsimd-)?(sse2|sse42|avx|avx2|avx512-skylake|aarch64|auto)$" 1> /dev/null
     return $?
 }
 
@@ -166,7 +171,16 @@ nsimd_is_installed () {
     return 0
 }
 
-# param one of sse2, sse42, avx, avx2, avx512
+
+nsimd_simd_flag () {
+    case "${1#nsimd-}" in
+        sse2 | sse42 | avx | avx2 | aarch64) echo "${1#nsimd-}";;
+        avx512-skylake) echo avx512_skylake;;
+        *) print_error "Unknown SIMD flag to build nsimd for ${1}."; return 1;;
+    esac
+}
+
+# param one of sse2, sse42, avx, avx2, avx512-skylake, aarch64
 nsimd_install () {
     check nsimd "${1##nsimd-}" && return 0
     check nsconfig || return 1
@@ -200,33 +214,34 @@ nsimd_install () {
     cd build
     # cmake .. -DSIMD=${VECTOR_EXTENSION^^}
     # make
-    noerror nsconfig .. -Dsimd=${VECTOR_EXTENSION}
+    noerror nsconfig .. -Dsimd=$(nsimd_simd_flag ${VECTOR_EXTENSION})
     ninja
     silent popd
 }
 
-gromacs_nsimd () {
+gromacs_nsimd_flag () {
     case "${1}" in
         nsimd-sse2)  echo SSE2;;
         nsimd-sse42) echo SSE4.1;;
         nsimd-avx)   echo AVX;;
         nsimd-avx2)  echo AVX2;;
-        nsimd-avx512_skylake) echo AVX_512;;
-        nsimd-avx512_knl) echo AVX_512;;
-        *) print_error "Cannot translate SIMD extension for NSIMD."; return 1;;
+        nsimd-avx512-skylake) echo AVX_512;;
+        nsimd-neon) echo ARM_NEON;;
+        nsimd-aarch64) echo ARM_NEON_ASIMD;;
+        *) print_error "Cannot translate SIMD extension '${1}' for NSIMD."; return 1;;
     esac
 }
 
-gromacs_simd () {
+gromacs_gmx_simd_flag () {
     case "${1}" in
         sse2)  echo SSE2;;
         sse42) echo SSE4.1;;
         avx)   echo AVX_256;;
         avx2)  echo AVX2_256;;
-        avx512_skylake) echo AVX_512;;
-        avx512_knl) echo AVX_512_KNL;;
+        avx512-skylake) echo AVX_512;;
+        avx512-knl) echo AVX_512_KNL;;
         nsimd-*) echo NSIMD;;
-        *) print_error "Cannot translate SIMD extension for GROMACS."; return 1;;
+        *) print_error "Cannot translate SIMD extension '${1}' for GROMACS."; return 1;;
     esac
 }
 
@@ -255,11 +270,11 @@ gromacs_install () {
 
     echo ${VECTOR_EXTENSION} | grep "nsimd-" &>/dev/null
     if [ $? -eq 0 ]; then
-        NSIMD_CMAKE_OPTS="-DGMX_NSIMD_PATH=${ROOT}/nsimd -DGMX_NSIMD_FOR=$(gromacs_nsimd ${VECTOR_EXTENSION}) -DCMAKE_PREFIX_PATH=${ROOT}/nsimd/build"
+        NSIMD_CMAKE_OPTS="-DGMX_NSIMD_PATH=${ROOT}/nsimd -DGMX_NSIMD_FOR=$(gromacs_nsimd_flag ${VECTOR_EXTENSION}) -DCMAKE_PREFIX_PATH=${ROOT}/nsimd/build"
     fi
 
     for GMX_MPI in on off; do
-        cmake .. -DGMX_SIMD=$(gromacs_simd ${VECTOR_EXTENSION}) -DGMX_MPI=${GMX_MPI} ${NSIMD_CMAKE_OPTS} || return 0
+        cmake .. -DGMX_SIMD=$(gromacs_gmx_simd_flag ${VECTOR_EXTENSION}) -DGMX_MPI=${GMX_MPI} ${NSIMD_CMAKE_OPTS} || return 0
         make -j $(nproc) || return 0
     done
     popd
@@ -289,7 +304,7 @@ bench () {
     export LD_LIBRARY_PATH="${PWD}/nsimd/build:${LD_LIBRARY_PATH}"
     export PATH="${PWD}/gromacs/${BUILDDIR}/bin:${PATH}"
     OMP_NUM_THREADS=24 gmx tune_pme -r 10 -s gromacs/topol.tpr -mdrun "gromacs/${BUILDDIR}/bin/gmx_mpi mdrun"
-    mv perf.out "perf-${VECTOR_EXTENSION}.out"
+    mv perf.out "${VECTOR_EXTENSION}-perf.out"
     rm -f bench*
 }
 
