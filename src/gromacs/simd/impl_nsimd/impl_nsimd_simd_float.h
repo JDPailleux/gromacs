@@ -292,7 +292,7 @@ static inline SimdFloat
 maskzRsqrt(SimdFloat x, SimdFBool m)
 {
 #ifndef NDEBUG
-    x.simdInternal_ = nsimd::if_else1(nsimd::cvt<nsimd::packl<float>>(m.simdInternal_), x.simdInternal_, nsimd::set1<nsimd::pack<float> >(1.));
+    x.simdInternal_ = nsimd::if_else(nsimd::cvt<nsimd::packl<float>>(m.simdInternal_), x.simdInternal_, nsimd::set1<nsimd::pack<float> >(1.));
 #endif
     return {
                nsimd::rsqrt11(x.simdInternal_) & m.simdInternal_
@@ -303,7 +303,7 @@ static inline SimdFloat
 maskzRcp(SimdFloat x, SimdFBool m)
 {
 #ifndef NDEBUG
-    x.simdInternal_ = nsimd::if_else1(nsimd::cvt<nsimd::packl<float>>(m.simdInternal_), x.simdInternal_, nsimd::set1<nsimd::pack<double> >(1.));
+    x.simdInternal_ = nsimd::if_else(nsimd::cvt<nsimd::packl<float>>(m.simdInternal_), x.simdInternal_, nsimd::set1<nsimd::pack<double> >(1.));
 #endif
     return {
                nsimd::rec11(x.simdInternal_) & m.simdInternal_
@@ -559,7 +559,7 @@ static inline SimdFloat gmx_simdcall
 blend(SimdFloat a, SimdFloat b, SimdFBool sel)
 {
     return SimdFloat {
-            nsimd::if_else1(nsimd::reinterpretl<nsimd::packl<f32>>(nsimd::ne(nsimd::reinterpret<nsimd::pack<u32>>(sel.simdInternal_), nsimd::pack<u32>(0))), b.simdInternal_, a.simdInternal_)
+            nsimd::if_else((nsimd::ne(nsimd::reinterpret<nsimd::pack<u32>>(sel.simdInternal_), nsimd::pack<u32>(0))), b.simdInternal_, a.simdInternal_)
     };
 }
 
@@ -620,7 +620,7 @@ static inline SimdFInt32 gmx_simdcall
 blend(SimdFInt32 a, SimdFInt32 b, SimdFIBool sel)
 {
     return {
-            nsimd::if_else1(nsimd::ne(nsimd::pack<int>(0), sel.simdInternal_), b.simdInternal_, a.simdInternal_)
+            nsimd::if_else(nsimd::ne(nsimd::pack<int>(0), sel.simdInternal_), b.simdInternal_, a.simdInternal_)
     };
 }
 
