@@ -174,7 +174,8 @@ nsimd_is_installed () {
 
 nsimd_simd_flag () {
     case "${1#nsimd-}" in
-        sse2 | sse42 | avx | avx2 | aarch64) echo "${1#nsimd-}";;
+        sse2 | sse42 | avx | avx2) echo "${1#nsimd-}";;
+        aarch64) echo "${1#nsimd-}" -Dgen_latest_simd=off;;
         avx512-skylake) echo avx512_skylake;;
         *) print_error "Unknown SIMD flag to build nsimd for ${1}."; return 1;;
     esac
@@ -226,8 +227,7 @@ gromacs_nsimd_flag () {
         nsimd-avx)   echo AVX;;
         nsimd-avx2)  echo AVX2;;
         nsimd-avx512-skylake) echo AVX_512;;
-        nsimd-neon) echo ARM_NEON;;
-        nsimd-aarch64) echo ARM_NEON_ASIMD;;
+        aarch64) echo AARCH64;;
         *) print_error "Cannot translate SIMD extension '${1}' for NSIMD."; return 1;;
     esac
 }
@@ -240,6 +240,7 @@ gromacs_gmx_simd_flag () {
         avx2)  echo AVX2_256;;
         avx512-skylake) echo AVX_512;;
         avx512-knl) echo AVX_512_KNL;;
+        aarch64) echo ARM_NEON_ASIMD;;
         nsimd-*) echo NSIMD;;
         *) print_error "Cannot translate SIMD extension '${1}' for GROMACS."; return 1;;
     esac
@@ -321,9 +322,7 @@ run() {
 
     if ! [ -e "${CONF_FILE}" ]; then
         print_error "Configuration file '${CONF_FILE}' not found"
-        return 1
-    fi
-    if ! source ${CONF_FILE}; then
+    elif ! source ${CONF_FILE}; then
         print_error "There was an error sourcing the configuration file '${CONFIG_FILE}'"
         return 1
     fi
