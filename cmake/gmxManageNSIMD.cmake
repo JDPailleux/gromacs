@@ -70,7 +70,7 @@ elseif(${GMX_SUGGESTED_SIMD} STREQUAL "AVX_512")
   set(NSIMD_LINKER_FLAGS "-L${GMX_NSIMD_ROOT}/build -lnsimd_x86_64")
 
 elseif(${GMX_SUGGESTED_SIMD} STREQUAL "ARM_NEON_ASIMD")
-	set(NSIMD_COMPILE_FLAGS "-DAARCH64  --with-cflags-scanner-extra=\"-Wc,-maarch64\"")
+	set(NSIMD_COMPILE_FLAGS "-DAARCH64")
   find_library(NSIMD_LIBRARY "libnsimd_aarch64")
   set(NSIMD_LINKER_FLAGS "-L${GMX_NSIMD_ROOT}/build -lnsimd_aarch64")
 
