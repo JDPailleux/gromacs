@@ -1298,21 +1298,21 @@ simdLoadU(const std::int32_t *m, SimdDInt32Tag)
     };
 }
 
+template<int index> gmx_simdcall
 static inline void gmx_simdcall
 storeU(std::int32_t * m, SimdDInt32 a)
 {
     vst1_s32(m, a.simdInternal_);
 }
 
-s.native_register()
-s.native_register()
-{.native_register()
+static inline SimdDInt32 gmx_simdcall
+setZeroDI()
+{
     return {
                vdup_n_s32(0)
     };
 }
 
-template<int index> gmx_simdcall
 static inline std::int32_t
 extract(SimdDInt32 a)
 {
@@ -1322,7 +1322,7 @@ extract(SimdDInt32 a)
 static inline double gmx_simdcall
 reduce(SimdDouble a)
 {
-    float64x2_t b = vpaddq_f64(a.simdInternal_, a.simdInternal_);
+    float64x2_t b = vpaddq_f64(a.simdInternal_.native_register(), a.simdInternal_.native_register());
     return vgetq_lane_f64(b, 0);
 }
 
@@ -1455,7 +1455,7 @@ static inline SimdDouble gmx_simdcall
 blend(SimdDouble a, SimdDouble b, SimdDBool sel)
 {
     return {
-               vbslq_f64(sel.simdInternal_, b.simdInternal_, a.simdInternal_)
+               vbslq_f64(sel.simdInternal_.native_register(), b.simdInternal_.native_register(), a.simdInternal_.native_register())
     };
 }
 
@@ -1538,7 +1538,7 @@ static inline SimdDouble
 ldexp(SimdDouble value, SimdDInt32 exponent)
 {
     const int32x2_t exponentBias = vdup_n_s32(1023);
-    int32x2_t       iExponent    = vadd_s32(exponent.simdInternal_.native_register(), exponentBias);
+    int32x2_t       iExponent    = vadd_s32(exponent.simdInternal_, exponentBias);
     int64x2_t       iExponent64;
 
     if (opt == MathOptimization::Safe)
@@ -1569,6 +1569,30 @@ operator||(SimdDIBool a, SimdDIBool b)
 {
     return {
                vorr_u32(a.simdInternal_, b.simdInternal_)
+    };
+}
+
+static inline SimdDBool gmx_simdcall
+operator!=(SimdDouble a, SimdDouble b)
+{
+    return {
+               vreinterpretq_u64_u32(vmvnq_u32(vreinterpretq_u32_u64(vceqq_f64(a.simdInternal_.native_register(), b.simdInternal_.native_register()))))
+    };
+}
+
+static inline SimdDBool gmx_simdcall
+operator<(SimdDouble a, SimdDouble b)
+{
+    return {
+               vcltq_f64(a.simdInternal_.native_register(), b.simdInternal_.native_register())
+    };
+}
+
+static inline SimdDBool gmx_simdcall
+operator<=(SimdDouble a, SimdDouble b)
+{
+    return {
+               vcleq_f64(a.simdInternal_.native_register(), b.simdInternal_.native_register())
     };
 }
 #endif

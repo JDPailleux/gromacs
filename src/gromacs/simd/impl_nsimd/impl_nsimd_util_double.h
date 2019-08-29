@@ -1332,7 +1332,7 @@ transposeScatterIncrU(double *             base,
     vst1q_f64(base + align * offset[0], t2);
 
     t3 = vld1_f64(base + align * offset[0] + 2);
-    t3 = vadd_f64(t3, vget_low_f64(v2.simdInternal_));
+    t3 = vadd_f64(t3, vget_low_f64(v2.simdInternal_.native_register()));
     vst1_f64(base + align * offset[0] + 2, t3);
 
     t2 = vld1q_f64(base + align * offset[1]);
@@ -1340,7 +1340,7 @@ transposeScatterIncrU(double *             base,
     vst1q_f64(base + align * offset[1], t2);
 
     t3 = vld1_f64(base + align * offset[1] + 2);
-    t3 = vadd_f64(t3, vget_high_f64(v2.simdInternal_));
+    t3 = vadd_f64(t3, vget_high_f64(v2.simdInternal_.native_register()));
     vst1_f64(base + align * offset[1] + 2, t3);
 }
 
