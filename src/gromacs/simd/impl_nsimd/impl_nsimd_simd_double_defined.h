@@ -1313,6 +1313,7 @@ setZeroDI()
     };
 }
 
+template<int index> gmx_simdcall
 static inline std::int32_t
 extract(SimdDInt32 a)
 {
@@ -1454,8 +1455,9 @@ blend(SimdDInt32 a, SimdDInt32 b, SimdDIBool sel)
 static inline SimdDouble gmx_simdcall
 blend(SimdDouble a, SimdDouble b, SimdDBool sel)
 {
+    nsimd::pack<unsigned long> select = nsimd::cvt<unsigned long>(sel.simdInternal_);
     return {
-               vbslq_f64(sel.simdInternal_.native_register(), b.simdInternal_.native_register(), a.simdInternal_.native_register())
+               vbslq_f64(select.native_register(), b.simdInternal_.native_register(), a.simdInternal_.native_register())
     };
 }
 
@@ -1486,8 +1488,9 @@ cvtI2R(SimdDInt32 a)
 static inline SimdDIBool gmx_simdcall
 cvtB2IB(SimdDBool a)
 {
+    nsimd::pack<unsigned long> a2 = nsimd::cvt<unsigned long>(a.simdInternal_); 
     return {
-               vqmovn_u64(a.simdInternal_.native_register())
+               vqmovn_u64(a2.native_register())
     };
 }
 
@@ -1593,6 +1596,22 @@ operator<=(SimdDouble a, SimdDouble b)
 {
     return {
                vcleq_f64(a.simdInternal_.native_register(), b.simdInternal_.native_register())
+    };
+}
+
+static inline SimdDouble gmx_simdcall
+rsqrtIter(SimdDouble lu, SimdDouble x)
+{
+    return {
+               vmulq_f64(lu.simdInternal_.native_register(), vrsqrtsq_f64(vmulq_f64(lu.simdInternal_.native_register(), lu.simdInternal_.native_register()), x.simdInternal_.native_register()))
+    };
+}
+
+static inline SimdDouble gmx_simdcall
+rcpIter(SimdDouble lu, SimdDouble x)
+{
+    return {
+               vmulq_f64(lu.simdInternal_.native_register(), vrecpsq_f64(lu.simdInternal_.native_register(), x.simdInternal_.native_register()))
     };
 }
 #endif
