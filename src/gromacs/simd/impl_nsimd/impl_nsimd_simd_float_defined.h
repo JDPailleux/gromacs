@@ -344,7 +344,7 @@ static inline SimdFloat gmx_simdcall
 rsqrtIter(SimdFloat lu, SimdFloat x)
 {
     return {
-               vmulq_f32(lu.simdInternal_,.native_register() vrsqrtsq_f32(vmulq_f32(lu.simdInternal_,.native_register() lu.simdInternal_), x.simdInternal_.native_register()))
+               vmulq_f32(lu.simdInternal_.native_register(), vrsqrtsq_f32(vmulq_f32(lu.simdInternal_.native_register(), lu.simdInternal_.native_register()), x.simdInternal_.native_register()))
     };
 }
 #endif
