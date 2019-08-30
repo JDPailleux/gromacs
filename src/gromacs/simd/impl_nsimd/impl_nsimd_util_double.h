@@ -1220,7 +1220,7 @@ loadU4NOffset(const double *m, int offset)
 
 #elif (defined(NSIMD_AARCH64) || defined(NSIMD_ARM_NEON))
 
-#if defined(NSIMD_AARCH64)
+#if defined(NSIMD_ARM_NEON)
 
 
 template <int align>

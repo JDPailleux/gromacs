@@ -298,7 +298,7 @@ ldexp(SimdFloat value, SimdFInt32 exponent)
     };
 }
 
-#if defined(NSIMD_NEON128)
+#if defined(NSIMD_ARM_NEON)
 static inline float gmx_simdcall
 reduce(SimdFloat a)
 {

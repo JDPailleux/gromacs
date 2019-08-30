@@ -1246,7 +1246,7 @@ maskzRcp(SimdDouble x, SimdDBool m)
 }
 #endif
 
-#elif defined(NSIMD_AARCH64)
+#elif defined(NSIMD_ARM_NEON)
 
 class SimdDInt32
 {

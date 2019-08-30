@@ -286,7 +286,7 @@
 
 #define GMX_SIMD                                1
 #define GMX_SIMD_HAVE_FLOAT                     1
-#define GMX_SIMD_HAVE_DOUBLE                    1
+#define GMX_SIMD_HAVE_DOUBLE                    0
 #define GMX_SIMD_HAVE_LOADU                     1
 #define GMX_SIMD_HAVE_STOREU                    1
 #define GMX_SIMD_HAVE_LOGICAL                   1
@@ -331,7 +331,7 @@
 
 #define GMX_SIMD                                1
 #define GMX_SIMD_HAVE_FLOAT                     1
-#define GMX_SIMD_HAVE_DOUBLE                    0
+#define GMX_SIMD_HAVE_DOUBLE                    1
 #define GMX_SIMD_HAVE_LOADU                     1
 #define GMX_SIMD_HAVE_STOREU                    1
 #define GMX_SIMD_HAVE_LOGICAL                   1
