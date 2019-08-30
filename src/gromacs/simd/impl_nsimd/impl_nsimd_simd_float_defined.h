@@ -339,6 +339,23 @@ cvttR2I(SimdFloat a)
     };
 }
 
+#if GMX_SIMD_HAVE_NATIVE_RSQRT_ITER_FLOAT
+static inline SimdFloat gmx_simdcall
+rsqrtIter(SimdFloat lu, SimdFloat x)
+{
+    return {
+               vmulq_f32(lu.simdInternal_,.native_register() vrsqrtsq_f32(vmulq_f32(lu.simdInternal_,.native_register() lu.simdInternal_), x.simdInternal_.native_register()))
+    };
+}
+#endif
+
+static inline SimdFloat gmx_simdcall
+rcpIter(SimdFloat lu, SimdFloat x)
+{
+    return {
+               vmulq_f32(lu.simdInternal_.native_register(), vrecpsq_f32(lu.simdInternal_.native_register(), x.simdInternal_.native_register()))
+    };
+}
 
 
 #endif
