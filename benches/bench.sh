@@ -1,9 +1,10 @@
-MACHINES_FILE="../machines.txt"
-SETUP_SCRIPT="../setup.sh"
-NSIMD_PATCH="../nsimd.patch"
+RESOURCE_ROOT=".."
+MACHINES_FILE="${RESOURCE_ROOT}/machines.txt"
+SETUP_SCRIPT="${RESOURCE_ROOT}/setup.sh"
+NSIMD_PATCH="${RESOURCE_ROOT}/nsimd.patch"
 
 print_error () {
-    echo "$@" 1>&2
+    echo -e "\033[1;31m$@\033[0m" 1>&2
 }
 
 noerror () {
@@ -32,13 +33,13 @@ while read -u 3 -r line; do
     echo "${SSH_HOST?Could not read ssh host from the ${MACHINES_FILE} file}"
     echo "${SIMD?Could not read the SIMD configuration from the ${MACHINES_FILE} file}"
 
-    # Check root dir for the machine
+    REMOTE_HOSTNAME=$(ssh "${SSH_HOST}" "hostname")
+    BENCH_ROOT_DIR=$(grep BENCH_ROOT_DIR "${RESOURCE_ROOT}/${REMOTE_HOSTNAME}.sh" | cut -d= -f 2)
+
     if [ "${BENCH_ROOT_DIR}" == "" ]; then
-        BENCH_ROOT_DIR=$(ssh "${SSH_HOST}" "grep GROMACS_ROOT_DIR ~/.config/gromacs-bench/\$(hostname).sh | cut -d= -f 2")
-        if [ "${BENCH_ROOT_DIR}" == "" ]; then
-            print_error "Could not get configuration for host: ${SSH_HOST}"
-            continue
-        fi
+        print_error "Could not get configuration for host: ${SSH_HOST}"
+        print_error "You must create file ${RESOURCE_ROOT}/${REMOTE_HOSTNAME}.sh and define the BENCH_ROOT_DIR variable in it."
+        continue
     fi
 
     if ! ssh "${SSH_HOST}" "[ -d ${BENCH_ROOT_DIR} ]"; then
@@ -46,15 +47,19 @@ while read -u 3 -r line; do
         continue
     fi
 
+    if ! [ -z "${REMOTE_HOSTNAME}" ] && [ -e "${RESOURCE_ROOT}/${REMOTE_HOSTNAME}.sh" ]; then
+        rsync "${RESOURCE_ROOT}/${REMOTE_HOSTNAME}.sh" "${SSH_HOST}:${BENCH_ROOT_DIR}/gromacs"
+    fi
+
     ssh "${SSH_HOST}" "mkdir -p ${BENCH_ROOT_DIR}/gromacs/bench" || continue
-    rsync "${SETUP_SCRIPT}" "${SSH_HOST}:${BENCH_ROOT_DIR}/gromacs" || continue
+    rsync "${SETUP_SCRIPT}" "${SSH_HOST}:${BENCH_ROOT_DIR}/gromacs" ||  continue
     rsync "${NSIMD_PATCH}" "${SSH_HOST}:${BENCH_ROOT_DIR}/gromacs" || continue
     # Use a here string to get an interactive shell
     ssh "${SSH_HOST}" <<< "bash ${BENCH_ROOT_DIR}/gromacs/setup.sh autorun ${SIMD}" || continue
     rsync "${SSH_HOST}:${BENCH_ROOT_DIR}/gromacs/bench/${SIMD}*" . || continue
 done 3< "${MACHINES_FILE}"
 
-python3 ../graph.py
+python3 ${RESOURCE_ROOT}/graph.py
 
 
 

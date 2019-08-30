@@ -1,7 +1,7 @@
 #!/bin/bash
 
 print_error () {
-    echo "$@" 1>&2
+    echo -e "\033[1;31m$@\033[0m" 1>&2
 }
 
 noerror () {
@@ -227,7 +227,7 @@ gromacs_nsimd_flag () {
         nsimd-avx)   echo AVX;;
         nsimd-avx2)  echo AVX2;;
         nsimd-avx512-skylake) echo AVX_512;;
-        aarch64) echo AARCH64;;
+        nsimd-aarch64) echo AARCH64;;
         *) print_error "Cannot translate SIMD extension '${1}' for NSIMD."; return 1;;
     esac
 }
@@ -275,8 +275,8 @@ gromacs_install () {
     fi
 
     for GMX_MPI in on off; do
-        cmake .. -DGMX_SIMD=$(gromacs_gmx_simd_flag ${VECTOR_EXTENSION}) -DGMX_MPI=${GMX_MPI} ${NSIMD_CMAKE_OPTS} || return 0
-        make -j $(nproc) || return 0
+        cmake .. -DGMX_SIMD=$(gromacs_gmx_simd_flag ${VECTOR_EXTENSION}) -DGMX_MPI=${GMX_MPI} ${NSIMD_CMAKE_OPTS} || return 1
+        make -j $(nproc) || return 1
     done
     popd
 }
@@ -317,17 +317,28 @@ autorun () {
     noerror bench ${SIMD}
 }
 
-run() {
-    CONF_FILE="${HOME}/.config/gromacs-bench/$(hostname).sh"
+source_configuration_file () {
+    [ -e "${1}" ] && source "${1}"
+}
 
-    if ! [ -e "${CONF_FILE}" ]; then
-        print_error "Configuration file '${CONF_FILE}' not found"
-    elif ! source ${CONF_FILE}; then
-        print_error "There was an error sourcing the configuration file '${CONFIG_FILE}'"
-        return 1
-    fi
+
+run() {
+    BENCH_ROOT_DIR="${0%/setup.sh}"
+    CONF_FILES=("${BENCH_ROOT_DIR}/$(hostname).sh" "${HOME}/.config/gromacs-bench/$(hostname).sh")
+
+    for CFILE in ${CONF_FILES[@]}; do
+        if source_configuration_file ${CFILE}; then
+            echo "Sourced ${CFILE}"
+            OK="ok"
+            break;
+        fi
+    done
+
+    [ -z "${OK}" ] && print_error "Could not source configuration file. Tried ${CONF_FILES[@]}." && exit
+    unset OK
+
     echo "$@"
-    noerror cd ${GROMACS_ROOT_DIR}/gromacs/bench
+    noerror cd ${BENCH_ROOT_DIR}/gromacs/bench
 
     export PATH="${PWD}/nsconfig":${PATH}
 

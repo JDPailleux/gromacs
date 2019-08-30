@@ -134,20 +134,22 @@ Each comparison requires specific \gromacs{} binaries that have been tailored fo
 \pgfkeyssetvalue{/vector/avx2}{AVX2}
 \pgfkeyssetvalue{/vector/avx512-skylake}{AVX512-Skylake}
 \pgfkeyssetvalue{/vector/avx512-knl}{AVX512-KNL}
+\pgfkeyssetvalue{/vector/aarch64}{AArch64}
 \pgfkeyssetvalue{/vector/nsimd-sse2}{NSIMD -- SSE2}
 \pgfkeyssetvalue{/vector/nsimd-sse42}{NSIMD -- SSE4.2}
 \pgfkeyssetvalue{/vector/nsimd-avx}{NSIMD -- AVX}
 \pgfkeyssetvalue{/vector/nsimd-avx2}{NSIMD -- AVX2}
 \pgfkeyssetvalue{/vector/nsimd-avx512-skylake}{NSIMD -- AVX512-Skylake}
 \pgfkeyssetvalue{/vector/nsimd-avx512-knl}{NSIMD -- AVX512-KNL}
+\pgfkeyssetvalue{/vector/nsimd-aarch64}{NSIMD -- AArch64}
 
 \renewcommand{\subsectionmark}[1]{\markright{#1}}
 \fancyhf[HR]{\rightmark}
 
 \section{Benchmarks}
 
-\foreach \ext in {sse2,sse42,avx,avx2,avx512-skylake}{
-  \IfFileExists{../results/\ext-compiler.info}{%
+\foreach \ext in {sse2,sse42,avx,avx2,avx512-skylake,aarch64}{
+  \IfFileExists{../results/nsimd-\ext-perf.out}{%
     \pgfkeysgetvalue{/vector/\ext}{\prettyext}%
     \subsection{\prettyext{}}
     \subsubsection{CPU}
@@ -169,7 +171,7 @@ Each comparison requires specific \gromacs{} binaries that have been tailored fo
     \lstinputlisting{../results/\ext-perf.out}
 
     \subsubsection{NSIMD for \prettyext{} Performance Report}
-    \lstinputlisting{../results/perf-nsimd-\ext.out}
+    \lstinputlisting{../results/nsimd-\ext-perf.out}
 
     \subsubsection{Comparison}
 
