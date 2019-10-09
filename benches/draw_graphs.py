@@ -86,7 +86,7 @@ def transpose_dict_dict(d):
 # -----------------------------------------------------------------------------
 
 def draw_graph(output_filename, title, data):
-    simd_exts_in_order = ["CPU", "SSE2", "NSIMD SSE2", "SSE42", "NSIMD SSE42",
+    simd_exts_in_order = ["NONE", "SSE2", "NSIMD SSE2", "SSE42", "NSIMD SSE42",
                           "AVX", "NSIMD AVX", "AVX2", "NSIMD AVX2",
                           "AVX512_KNL", "NSIMD AVX512_KNL", "AVX512_SKYLAKE",
                           "NSIMD AVX512_SKYLAKE", "NEON128", "NSIMD NEON128",
@@ -145,6 +145,8 @@ if __name__ == "__main__":
     latex = ''
     res = transpose_dict_dict(res)
     for p in res.items():
+        if len(p[1]) <= 1:
+            continue
         svg = measure2filename(p[0])
         pdf = svg.replace('.svg', '.pdf')
         draw_graph(svg, p[0], p[1])
