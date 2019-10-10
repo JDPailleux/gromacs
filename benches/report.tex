@@ -150,13 +150,12 @@ find the source in the
 
 Each comparison requires specific \gromacs{} binaries that have been tailored
 for the vector instruction set chosen. We compiled a set of binaries using the
-already provided code and a set using \nsimd{}. The performance reports found
-in the execution logs are then gathered for comparison in graphs. Each
-performance counter.
+already provided code and a set using \nsimd{}.
 
-The report made by \gromacs{} is given below for each tested SIMD extension
-with and without \nsimd{}. The core information is extracted to ease the
-comparison between the handcrafted SIMD versions and the one using \nsimd{}.
+The next chapter presents graphs comparing each performance counter coming from
+the different runs of the \gromacs{} binaries each of which compiled with its
+own set of SIMD instructions.  In the last chapter, the log reports made by
+\gromacs{} are given below.
 
 \subsection{Protocol}
 
@@ -166,8 +165,16 @@ at \href{https://ftp.gromacs.org/pub/benchmarks/water_GMX50_bare.tar.gz}.
 
 \begin{lstlisting}
 gmx grompp -f pme.mdp
-gmx mdrun -resethway -noconfout -nsteps 1000
+gmx convert-tpr -nsteps 1000
+gmx mdrun -nt __NTHREADS__
 \end{lstlisting}
+
+Note that the goal of this document is \emph{not} to measures the performances
+of a particular compiler or CPU. The \emph{only} goal is to measure NSIMD
+performances against \gromacs{}'s native SIMD code. Therefore we do not need
+to run \gromacs{} over all cores or over several nodes. We limit the number
+of threads to __NTHREADS__ so that each has enough work and no time is spent
+on waiting each other.
 
 \subsubsection{CPU}
 \lstinputlisting{cpu.info}
