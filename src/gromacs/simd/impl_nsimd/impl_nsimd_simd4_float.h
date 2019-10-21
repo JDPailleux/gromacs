@@ -77,7 +77,7 @@
 #undef GMX_SIMD_X86_AVX2_256
 #define GMX_SIMD_X86_AVX2_256 0
 
-#elif defined(NSIMD_AVX512_KNL) 
+#elif defined(NSIMD_AVX512_KNL)
 #undef GMX_SIMD_X86_AVX_512_KNL
 #define GMX_SIMD_X86_AVX_512_KNL 1
 #include "gromacs/simd/impl_x86_avx_512_knl/impl_x86_avx_512_knl_simd4_float.h"
@@ -91,7 +91,7 @@
 #undef GMX_SIMD_X86_AVX_512
 #define GMX_SIMD_X86_AVX_512 0
 
-#elif defined(NSIMD_AARCH64) 
+#elif defined(NSIMD_AARCH64)
 #undef GMX_SIMD_ARM_NEON_ASIMD
 #define GMX_SIMD_ARM_NEON_ASIMD 1
 #include "gromacs/simd/impl_arm_neon_asimd/impl_arm_neon_asimd_simd4_float.h"

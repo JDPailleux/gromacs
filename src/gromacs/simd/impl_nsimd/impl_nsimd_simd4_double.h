@@ -49,7 +49,7 @@
 
 #include "impl_nsimd_general.h"
 
-#if defined(NSIMD_AVX512_KNL) 
+#if defined(NSIMD_AVX512_KNL)
 #undef GMX_SIMD_X86_AVX_512_KNL
 #define GMX_SIMD_X86_AVX_512_KNL 1
 #include "gromacs/simd/impl_x86_avx_512_knl/impl_x86_avx_512_knl_simd4_double.h"
@@ -64,274 +64,171 @@
 #define GMX_SIMD_X86_AVX_512 0
 
 #else
-namespace gmx
-{
+namespace gmx {
 
-class Simd4Double
-{
-    public:
-        Simd4Double() {}
+class Simd4Double {
+public:
+  Simd4Double() {}
 
-        Simd4Double(double d) : simdInternal_(nsimd::set1<nsimd::pack<double> >(d)) {}
+  Simd4Double(double d)
+      : simdInternal_(nsimd::set1<nsimd::pack<double> >(d)) {}
 
-        // Internal utility constructor to simplify return statement
-        Simd4Double(nsimd::pack<double> simd) : simdInternal_(simd) {}
+  // Internal utility constructor to simplify return statement
+  Simd4Double(nsimd::pack<double> simd) : simdInternal_(simd) {}
 
-        nsimd::pack<double> simdInternal_;
+  nsimd::pack<double> simdInternal_;
 };
 
-class Simd4DBool
-{
-    public:
-        Simd4DBool() {}
+class Simd4DBool {
+public:
+  Simd4DBool() {}
 
-        //! \brief Construct from scalar bool
-        Simd4DBool(bool b) : simdInternal_(nsimd::reinterpret<nsimd::pack<double> >(nsimd::set1<nsimd::pack<long> >(b ? 0x1FFFFFFF : 0l))) {}
+  //! \brief Construct from scalar bool
+  Simd4DBool(bool b)
+      : simdInternal_(nsimd::to_logical(
+            nsimd::set1<nsimd::pack<double> >(b ? 1.0 : 0.0))) {}
 
-        // Internal utility constructor to simplify return statement
-        Simd4DBool(nsimd::pack<double> simd) : simdInternal_(simd) {}
+  Simd4DBool(nsimd::packl<double> v) : simdInternal_(v) {}
 
-        nsimd::pack<double> simdInternal_;
+  nsimd::packl<double> simdInternal_;
 };
 
-static inline Simd4Double gmx_simdcall
-load4(const double *m)
-{
-    assert(std::size_t(m) % 32 == 0);
-    return {
-               nsimd::loada<nsimd::pack<double> >(m)
-    };
+static inline Simd4Double gmx_simdcall load4(const double *m) {
+  assert(std::size_t(m) % 32 == 0);
+  return {nsimd::loada<nsimd::pack<double> >(m)};
 }
 
-static inline void gmx_simdcall
-store4(double *m, Simd4Double a)
-{
-    assert(std::size_t(m) % 32 == 0);
-    nsimd::storea(m, a.simdInternal_);
+static inline void gmx_simdcall store4(double *m, Simd4Double a) {
+  assert(std::size_t(m) % 32 == 0);
+  nsimd::storea(m, a.simdInternal_);
 }
 
-static inline Simd4Double gmx_simdcall
-load4U(const double *m)
-{
-    return {
-               nsimd::loadu<nsimd::pack<double> >(m)
-    };
+static inline Simd4Double gmx_simdcall load4U(const double *m) {
+  return {nsimd::loadu<nsimd::pack<double> >(m)};
 }
 
-static inline void gmx_simdcall
-store4U(double *m, Simd4Double a)
-{
-    nsimd::storeu(m, a.simdInternal_);
+static inline void gmx_simdcall store4U(double *m, Simd4Double a) {
+  nsimd::storeu(m, a.simdInternal_);
 }
 
-static inline Simd4Double gmx_simdcall
-simd4SetZeroD()
-{
-    return {
-               nsimd::set1<nsimd::pack<double> >(0.0)
-    };
+static inline Simd4Double gmx_simdcall simd4SetZeroD() {
+  return {nsimd::set1<nsimd::pack<double> >(0.0)};
 }
 
-static inline Simd4Double gmx_simdcall
-operator&(Simd4Double a, Simd4Double b)
-{
-    return {
-               a.simdInternal_ & b.simdInternal_
-    };
+static inline Simd4Double gmx_simdcall operator&(Simd4Double a,
+                                                 Simd4Double b) {
+  return {a.simdInternal_ & b.simdInternal_};
 }
 
-static inline Simd4Double gmx_simdcall
-andNot(Simd4Double a, Simd4Double b)
-{
-    return {
-               nsimd::andnotb(b.simdInternal_, a.simdInternal_)
-    };
+static inline Simd4Double gmx_simdcall andNot(Simd4Double a, Simd4Double b) {
+  return {nsimd::andnotb(b.simdInternal_, a.simdInternal_)};
 }
 
-static inline Simd4Double gmx_simdcall
-operator|(Simd4Double a, Simd4Double b)
-{
-    return {
-               a.simdInternal_ | b.simdInternal_
-    };
+static inline Simd4Double gmx_simdcall operator|(Simd4Double a,
+                                                 Simd4Double b) {
+  return {a.simdInternal_ | b.simdInternal_};
 }
 
-static inline Simd4Double gmx_simdcall
-operator^(Simd4Double a, Simd4Double b)
-{
-    return {
-               a.simdInternal_ ^ b.simdInternal_
-    };
+static inline Simd4Double gmx_simdcall operator^(Simd4Double a,
+                                                 Simd4Double b) {
+  return {a.simdInternal_ ^ b.simdInternal_};
 }
 
-static inline Simd4Double gmx_simdcall
-operator+(Simd4Double a, Simd4Double b)
-{
-    return {
-               a.simdInternal_ + b.simdInternal_
-    };
+static inline Simd4Double gmx_simdcall operator+(Simd4Double a,
+                                                 Simd4Double b) {
+  return {a.simdInternal_ + b.simdInternal_};
 }
 
-static inline Simd4Double gmx_simdcall
-operator-(Simd4Double a, Simd4Double b)
-{
-    return {
-               a.simdInternal_ - b.simdInternal_
-    };
+static inline Simd4Double gmx_simdcall operator-(Simd4Double a,
+                                                 Simd4Double b) {
+  return {a.simdInternal_ - b.simdInternal_};
 }
 
-static inline Simd4Double gmx_simdcall
-operator-(Simd4Double x)
-{
-    return {
-               x.simdInternal_ ^ nsimd::set1<nsimd::pack<double>>(GMX_DOUBLE_NEGZERO)
-    };
+static inline Simd4Double gmx_simdcall operator-(Simd4Double x) {
+  return {x.simdInternal_ ^
+          nsimd::set1<nsimd::pack<double> >(GMX_DOUBLE_NEGZERO)};
 }
 
-static inline Simd4Double gmx_simdcall
-operator*(Simd4Double a, Simd4Double b)
-{
-    return {
-               a.simdInternal_ * b.simdInternal_
-    };
+static inline Simd4Double gmx_simdcall operator*(Simd4Double a,
+                                                 Simd4Double b) {
+  return {a.simdInternal_ * b.simdInternal_};
 }
 
-static inline Simd4Double gmx_simdcall
-fma(Simd4Double a, Simd4Double b, Simd4Double c)
-{
-    return {
-               nsimd::fma(a.simdInternal_, b.simdInternal_, c.simdInternal_)
-    };
+static inline Simd4Double gmx_simdcall fma(Simd4Double a, Simd4Double b,
+                                           Simd4Double c) {
+  return {nsimd::fma(a.simdInternal_, b.simdInternal_, c.simdInternal_)};
 }
 
-static inline Simd4Double gmx_simdcall
-fms(Simd4Double a, Simd4Double b, Simd4Double c)
-{
-    return {
-               nsimd::fms(a.simdInternal_, b.simdInternal_, c.simdInternal_)
-    };
+static inline Simd4Double gmx_simdcall fms(Simd4Double a, Simd4Double b,
+                                           Simd4Double c) {
+  return {nsimd::fms(a.simdInternal_, b.simdInternal_, c.simdInternal_)};
 }
 
-static inline Simd4Double gmx_simdcall
-fnma(Simd4Double a, Simd4Double b, Simd4Double c)
-{
-    return {
-               nsimd::fnma(a.simdInternal_, b.simdInternal_, c.simdInternal_)
-    };
+static inline Simd4Double gmx_simdcall fnma(Simd4Double a, Simd4Double b,
+                                            Simd4Double c) {
+  return {nsimd::fnma(a.simdInternal_, b.simdInternal_, c.simdInternal_)};
 }
 
-static inline Simd4Double gmx_simdcall
-fnms(Simd4Double a, Simd4Double b, Simd4Double c)
-{
-    return {
-               nsimd::fnms(a.simdInternal_, b.simdInternal_, c.simdInternal_)
-    };
+static inline Simd4Double gmx_simdcall fnms(Simd4Double a, Simd4Double b,
+                                            Simd4Double c) {
+  return {nsimd::fnms(a.simdInternal_, b.simdInternal_, c.simdInternal_)};
 }
 
-static inline Simd4Double gmx_simdcall
-rsqrt(Simd4Double x)
-{
-    return {
-               nsimd::rsqrt11(x.simdInternal_)
-    };
+static inline Simd4Double gmx_simdcall rsqrt(Simd4Double x) {
+  return {nsimd::rsqrt11(x.simdInternal_)};
 }
 
-static inline Simd4Double gmx_simdcall
-abs(Simd4Double x)
-{
-    return {
-               nsimd::abs(x.simdInternal_)
-    };
+static inline Simd4Double gmx_simdcall abs(Simd4Double x) {
+  return {nsimd::abs(x.simdInternal_)};
 }
 
-static inline Simd4Double gmx_simdcall
-max(Simd4Double a, Simd4Double b)
-{
-    return {
-               nsimd::max(a.simdInternal_, b.simdInternal_)
-    };
+static inline Simd4Double gmx_simdcall max(Simd4Double a, Simd4Double b) {
+  return {nsimd::max(a.simdInternal_, b.simdInternal_)};
 }
 
-static inline Simd4Double gmx_simdcall
-min(Simd4Double a, Simd4Double b)
-{
-    return {
-               nsimd::min(a.simdInternal_, b.simdInternal_)
-    };
+static inline Simd4Double gmx_simdcall min(Simd4Double a, Simd4Double b) {
+  return {nsimd::min(a.simdInternal_, b.simdInternal_)};
 }
 
-static inline Simd4Double gmx_simdcall
-round(Simd4Double x)
-{
-    return {
-               nsimd::round_to_even(x.simdInternal_)
-    };
+static inline Simd4Double gmx_simdcall round(Simd4Double x) {
+  return {nsimd::round_to_even(x.simdInternal_)};
 }
 
-static inline Simd4Double gmx_simdcall
-trunc(Simd4Double x)
-{
-    return {
-               nsimd::trunc(x.simdInternal_)
-    };
+static inline Simd4Double gmx_simdcall trunc(Simd4Double x) {
+  return {nsimd::trunc(x.simdInternal_)};
 }
 
-// static inline Simd4DBool gmx_simdcall
-// operator==(Simd4Double a, Simd4Double b)
-// {
-//     nsimd::pack<double> ffff = nsimd::reinterpret<nsimd::pack<double>>(nsimd::set1<nsimd::pack<unsigned int>>(-1u));
-//     return {
-//                nsimd::if_else1(a.simdInternal_== b.simdInternal_, ffff, nsimd::set1<nsimd::pack<double>>(0.0))
-//     };
-// }
-
-// static inline Simd4DBool gmx_simdcall
-// operator!=(Simd4Double a, Simd4Double b)
-// {
-//     nsimd::pack<double> ffff = nsimd::reinterpret<nsimd::pack<double>>(nsimd::set1<nsimd::pack<unsigned int>>(-1u));
-//     return {
-//                nsimd::if_else1(a.simdInternal_!= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(ffff), nsimd::set1<nsimd::pack<double>>(0.0))
-//     };
-// }
-
-// static inline Simd4DBool gmx_simdcall
-// operator<(Simd4Double a, Simd4Double b)
-// {
-//     nsimd::pack<double> ffff = nsimd::reinterpret<nsimd::pack<double>>(nsimd::set1<nsimd::pack<unsigned int>>(-1u));
-//     return {
-//                nsimd::if_else1(a.simdInternal_< b.simdInternal_, nsimd::set1<nsimd::pack<double>>(ffff), nsimd::set1<nsimd::pack<double>>(0.0))
-//     };
-// }
-
-// static inline Simd4DBool gmx_simdcall
-// operator<=(Simd4Double a, Simd4Double b)
-// {
-//     nsimd::pack<double> ffff = nsimd::reinterpret<nsimd::pack<double>>(nsimd::set1<nsimd::pack<unsigned int>>(-1u));
-//     return {
-//                nsimd::if_else1(a.simdInternal_<= b.simdInternal_, nsimd::set1<nsimd::pack<double>>(ffff), nsimd::set1<nsimd::pack<double>>(0.0))
-//     };
-// }
-
-static inline Simd4DBool gmx_simdcall
-operator&&(Simd4DBool a, Simd4DBool b)
-{
-    return {
-               a.simdInternal_ && b.simdInternal_
-    };
+static inline Simd4DBool gmx_simdcall operator==(Simd4Double a,
+                                                 Simd4Double b) {
+  return Simd4DBool(a.simdInternal_ == b.simdInternal_);
 }
 
-static inline Simd4DBool gmx_simdcall
-operator||(Simd4DBool a, Simd4DBool b)
-{
-    return {
-               a.simdInternal_ || b.simdInternal_
-    };
+static inline Simd4DBool gmx_simdcall operator!=(Simd4Double a,
+                                                 Simd4Double b) {
+  return Simd4DBool(a.simdInternal_ != b.simdInternal_);
+}
+
+static inline Simd4DBool gmx_simdcall operator<(Simd4Double a, Simd4Double b) {
+  return Simd4DBool(a.simdInternal_ < b.simdInternal_);
+}
+
+static inline Simd4DBool gmx_simdcall operator<=(Simd4Double a,
+                                                 Simd4Double b) {
+  return Simd4DBool(a.simdInternal_ <= b.simdInternal_);
+}
+
+static inline Simd4DBool gmx_simdcall operator&&(Simd4DBool a, Simd4DBool b) {
+  return {a.simdInternal_ && b.simdInternal_};
+}
+
+static inline Simd4DBool gmx_simdcall operator||(Simd4DBool a, Simd4DBool b) {
+  return {a.simdInternal_ || b.simdInternal_};
 }
 
 // Include the rest of the functions
 #include "impl_nsimd_simd4_double_defined.h"
 
-}      // namespace gm
+} // namespace gmx
 #endif
 
 #endif // GMX_SIMD_IMPL_NSIMD_SIMD4_DOUBLE_H

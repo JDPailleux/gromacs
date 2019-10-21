@@ -702,7 +702,7 @@ gatherLoadBySimdIntTranspose(const double *  base,
     assert(align % 4 == 0);
 
     alignas(GMX_SIMD_ALIGNMENT) std::int32_t ioffset[GMX_SIMD_DINT32_WIDTH];
-    _mm_store_si128( reinterpret_cast<__m128i *>(ioffset), offset.simdInternal_);
+    _mm_store_si128( reinterpret_cast<__m128i *>(ioffset), offset.simdInternal_.native_register());
 
     v0->simdInternal_ = _mm256_load_pd(base + align * ioffset[0]);
     v1->simdInternal_ = _mm256_load_pd(base + align * ioffset[1]);
@@ -726,7 +726,7 @@ gatherLoadBySimdIntTranspose(const double *    base,
     assert(align % 2 == 0);
 
     alignas(GMX_SIMD_ALIGNMENT) std::int32_t  ioffset[GMX_SIMD_DINT32_WIDTH];
-    _mm_store_si128( reinterpret_cast<__m128i *>(ioffset), offset.simdInternal_);
+    _mm_store_si128( reinterpret_cast<__m128i *>(ioffset), offset.simdInternal_.native_register());
 
     t1  = _mm_load_pd(base + align * ioffset[0]);
     t2  = _mm_load_pd(base + align * ioffset[1]);
@@ -750,7 +750,7 @@ gatherLoadUBySimdIntTranspose(const double *  base,
     __m256d tA, tB;
 
     alignas(GMX_SIMD_ALIGNMENT) std::int32_t ioffset[GMX_SIMD_DINT32_WIDTH];
-    _mm_store_si128( reinterpret_cast<__m128i *>(ioffset), offset.simdInternal_);
+    _mm_store_si128( reinterpret_cast<__m128i *>(ioffset), offset.simdInternal_.native_register());
 
     t1   = _mm_loadu_pd(base + align * ioffset[0]);
     t2   = _mm_loadu_pd(base + align * ioffset[1]);
@@ -812,9 +812,9 @@ gatherLoadUTransposeSafe(const double *        base,
     SimdDInt32       vindex = simdLoad(offset, SimdDInt32Tag());
     vindex = vindex*alignSimd;
 
-    *v0 = _mm256_i32gather_pd(base + 0, vindex.simdInternal_, sizeof(double));
-    *v1 = _mm256_i32gather_pd(base + 1, vindex.simdInternal_, sizeof(double));
-    *v2 = _mm256_i32gather_pd(base + 2, vindex.simdInternal_, sizeof(double));
+    *v0 = _mm256_i32gather_pd(base + 0, vindex.simdInternal_.native_register(), sizeof(double));
+    *v1 = _mm256_i32gather_pd(base + 1, vindex.simdInternal_.native_register(), sizeof(double));
+    *v2 = _mm256_i32gather_pd(base + 2, vindex.simdInternal_.native_register(), sizeof(double));
 }
 
 #elif (defined(NSIMD_AVX512_KNL) || defined(NSIMD_AVX512_SKYLAKE))
@@ -832,15 +832,15 @@ SimdDInt32 fastMultiply(SimdDInt32 x)
 {
     if (n == 2)
     {
-        return _mm256_slli_epi32(x.simdInternal_, 1);
+        return _mm256_slli_epi32(x.simdInternal_.native_register(), 1);
     }
     else if (n == 4)
     {
-        return _mm256_slli_epi32(x.simdInternal_, 2);
+        return _mm256_slli_epi32(x.simdInternal_.native_register(), 2);
     }
     else if (n == 8)
     {
-        return _mm256_slli_epi32(x.simdInternal_, 3);
+        return _mm256_slli_epi32(x.simdInternal_.native_register(), 3);
     }
     else
     {
@@ -866,7 +866,7 @@ gatherLoadBySimdIntTranspose(const double * base, SimdDInt32 offset, SimdDouble 
         offset = fastMultiply<align>(offset);
     }
     constexpr size_t scale = sizeof(double);
-    v->simdInternal_ = _mm512_i32gather_pd(offset.simdInternal_, base, scale);
+    v->simdInternal_ = _mm512_i32gather_pd(offset.simdInternal_.native_register(), base, scale);
     gatherLoadBySimdIntTranspose<1>(base+1, offset, Fargs ...);
 }
 
@@ -906,9 +906,9 @@ transposeScatterStoreU(double *             base,
         simdoffset = fastMultiply<align>(simdoffset);;
     }
     constexpr size_t scale = sizeof(double);
-    _mm512_i32scatter_pd(base,   simdoffset.simdInternal_, v0.simdInternal_.native_register(), scale);
-    _mm512_i32scatter_pd(&(base[1]), simdoffset.simdInternal_, v1.simdInternal_.native_register(), scale);
-    _mm512_i32scatter_pd(&(base[2]), simdoffset.simdInternal_, v2.simdInternal_.native_register(), scale);
+    _mm512_i32scatter_pd(base,   simdoffset.simdInternal_.native_register(), v0.simdInternal_.native_register(), scale);
+    _mm512_i32scatter_pd(&(base[1]), simdoffset.simdInternal_.native_register(), v1.simdInternal_.native_register(), scale);
+    _mm512_i32scatter_pd(&(base[2]), simdoffset.simdInternal_.native_register(), v2.simdInternal_.native_register(), scale);
 }
 
 template <int align>
@@ -1402,7 +1402,7 @@ gatherLoadBySimdIntTranspose(const double *  base,
     assert(std::size_t(base) % 16 == 0);
     assert(align % 2 == 0);
 
-    vst1_s32(ioffset, offset.simdInternal_);
+    vst1_s32(ioffset, offset.simdInternal_.native_register());
     gatherLoadTranspose<align>(base, ioffset, v0, v1, v2, v3);
 }
 
@@ -1419,7 +1419,7 @@ gatherLoadBySimdIntTranspose(const double *  base,
     assert(std::size_t(base) % 16 == 0);
     assert(align % 2 == 0);
 
-    vst1_s32(ioffset, offset.simdInternal_);
+    vst1_s32(ioffset, offset.simdInternal_.native_register());
     gatherLoadTranspose<align>(base, ioffset, v0, v1);
 }
 
@@ -1432,7 +1432,7 @@ gatherLoadUBySimdIntTranspose(const double *  base,
 {
     alignas(GMX_SIMD_ALIGNMENT) std::int32_t     ioffset[GMX_SIMD_DINT32_WIDTH];
 
-    vst1_s32(ioffset, offset.simdInternal_);
+    vst1_s32(ioffset, offset.simdInternal_.native_register());
 
     float64x2_t t1, t2;
 
