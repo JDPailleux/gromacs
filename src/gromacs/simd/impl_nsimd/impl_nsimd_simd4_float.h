@@ -46,9 +46,10 @@
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
 
-// #include "impl_nsimd_simd4_float_defined.h"
+#include "impl_nsimd_simd4_float_defined.h"
 #include "impl_nsimd_general.h"
 
+/*
 #if defined(NSIMD_SSE2)
 #undef GMX_SIMD_X86_SSE2
 #define GMX_SIMD_X86_SSE2 1
@@ -106,6 +107,6 @@
 #define GMX_SIMD_ARM_NEON 0
 
 #endif
-
+*/
 
 #endif // GMX_SIMD_IMPL_NSIMD_SIMD4_FLOAT_

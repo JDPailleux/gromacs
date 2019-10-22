@@ -49,34 +49,30 @@
 
 #include "impl_nsimd_general.h"
 
-#if defined(NSIMD_AVX512_KNL)
-#undef GMX_SIMD_X86_AVX_512_KNL
-#define GMX_SIMD_X86_AVX_512_KNL 1
-#include "gromacs/simd/impl_x86_avx_512_knl/impl_x86_avx_512_knl_simd4_double.h"
-#undef GMX_SIMD_X86_AVX_512_KNL
-#define GMX_SIMD_X86_AVX_512_KNL 0
-
-#elif defined(NSIMD_AVX512_SKYLAKE)
-#undef GMX_SIMD_X86_AVX_512
-#define GMX_SIMD_X86_AVX_512 1
-#include "gromacs/simd/impl_x86_avx_512/impl_x86_avx_512_simd4_double.h"
-#undef GMX_SIMD_X86_AVX_512
-#define GMX_SIMD_X86_AVX_512 0
-
-#else
 namespace gmx {
+
+#if defined(NSIMD_SSE2) || defined(NSIMD_SSE42) || defined(NSIMD_NEON128) ||  \
+    defined(NSIMD_AARCH64)
+#error "No SIMD register that can store 4 doubles"
+#elif defined(NSIMD_AVX)
+typedef nsimd::pack<double, 1, nsimd::avx> pack4d_t;
+typedef nsimd::packl<double, 1, nsimd::avx> packl4d_t;
+#else
+typedef nsimd::pack<double, 1, nsimd::avx2> pack4d_t;
+typedef nsimd::packl<double, 1, nsimd::avx2> packl4d_t;
+#endif
 
 class Simd4Double {
 public:
   Simd4Double() {}
 
   Simd4Double(double d)
-      : simdInternal_(nsimd::set1<nsimd::pack<double> >(d)) {}
+      : simdInternal_(nsimd::set1<pack4d_t>(d)) {}
 
   // Internal utility constructor to simplify return statement
-  Simd4Double(nsimd::pack<double> simd) : simdInternal_(simd) {}
+  Simd4Double(pack4d_t v) : simdInternal_(v) {}
 
-  nsimd::pack<double> simdInternal_;
+  pack4d_t simdInternal_;
 };
 
 class Simd4DBool {
@@ -85,17 +81,17 @@ public:
 
   //! \brief Construct from scalar bool
   Simd4DBool(bool b)
-      : simdInternal_(nsimd::to_logical(
-            nsimd::set1<nsimd::pack<double> >(b ? 1.0 : 0.0))) {}
+      : simdInternal_(
+            nsimd::to_logical(nsimd::set1<pack4d_t>(b ? 1.0 : 0.0))) {}
 
-  Simd4DBool(nsimd::packl<double> v) : simdInternal_(v) {}
+  Simd4DBool(packl4d_t v) : simdInternal_(v) {}
 
-  nsimd::packl<double> simdInternal_;
+  packl4d_t simdInternal_;
 };
 
 static inline Simd4Double gmx_simdcall load4(const double *m) {
   assert(std::size_t(m) % 32 == 0);
-  return {nsimd::loada<nsimd::pack<double> >(m)};
+  return {nsimd::loada<pack4d_t >(m)};
 }
 
 static inline void gmx_simdcall store4(double *m, Simd4Double a) {
@@ -104,7 +100,7 @@ static inline void gmx_simdcall store4(double *m, Simd4Double a) {
 }
 
 static inline Simd4Double gmx_simdcall load4U(const double *m) {
-  return {nsimd::loadu<nsimd::pack<double> >(m)};
+  return {nsimd::loadu<pack4d_t >(m)};
 }
 
 static inline void gmx_simdcall store4U(double *m, Simd4Double a) {
@@ -112,7 +108,7 @@ static inline void gmx_simdcall store4U(double *m, Simd4Double a) {
 }
 
 static inline Simd4Double gmx_simdcall simd4SetZeroD() {
-  return {nsimd::set1<nsimd::pack<double> >(0.0)};
+  return {nsimd::set1<pack4d_t >(0.0)};
 }
 
 static inline Simd4Double gmx_simdcall operator&(Simd4Double a,
@@ -145,8 +141,7 @@ static inline Simd4Double gmx_simdcall operator-(Simd4Double a,
 }
 
 static inline Simd4Double gmx_simdcall operator-(Simd4Double x) {
-  return {x.simdInternal_ ^
-          nsimd::set1<nsimd::pack<double> >(GMX_DOUBLE_NEGZERO)};
+  return {x.simdInternal_ ^ nsimd::set1<pack4d_t>(GMX_DOUBLE_NEGZERO)};
 }
 
 static inline Simd4Double gmx_simdcall operator*(Simd4Double a,
@@ -229,6 +224,5 @@ static inline Simd4DBool gmx_simdcall operator||(Simd4DBool a, Simd4DBool b) {
 #include "impl_nsimd_simd4_double_defined.h"
 
 } // namespace gmx
-#endif
 
 #endif // GMX_SIMD_IMPL_NSIMD_SIMD4_DOUBLE_H
