@@ -163,6 +163,18 @@ static inline Simd4Float gmx_simdcall trunc(Simd4Float x) {
 
 static inline float gmx_simdcall dotProduct(Simd4Float a, Simd4Float b) {
 #if defined(NSIMD_SSE2)
+    __m128 c, d;
+    c = _mm_mul_ps(a.simdInternal_.native_register(),
+                   b.simdInternal_.native_register());
+    d = _mm_add_ps(c, _mm_shuffle_ps(c, c, _MM_SHUFFLE(2, 1, 2, 1)));
+    d = _mm_add_ps(d, _mm_shuffle_ps(c, c, _MM_SHUFFLE(3, 2, 3, 2)));
+    return *reinterpret_cast<float *>(&d);
+#elif defined(NSIMD_SSE42)
+  __m128 res = _mm_dp_ps(a.simdInternal_.native_register(),
+                         b.simdInternal_.native_register(), 0x71);
+  return *reinterpret_cast<float *>(&res);
+#elif defined(NSIMD_AVX) || defined(NSIMD_AVX2) ||                            \
+    defined(NSIMD_AVX512_KNL) || defined(NSIMD_AVX512_SKYLAKE)
   __m128 c, d;
   c = _mm_mul_ps(a.simdInternal_.native_register(),
                  b.simdInternal_.native_register());
@@ -176,25 +188,21 @@ static inline float gmx_simdcall dotProduct(Simd4Float a, Simd4Float b) {
   c.simdInternal_ =
       pack4f_t(vsetq_lane_f32(0.0f, c.simdInternal_.native_register(), 3));
   return reduce(c);
-#else
-  __m128 res = _mm_dp_ps(a.simdInternal_.native_register(),
-                         b.simdInternal_.native_register(), 0x71);
-  return *reinterpret_cast<float *>(&res);
 #endif
 }
 
 static inline void gmx_simdcall transpose(Simd4Float *v0, Simd4Float *v1,
                                           Simd4Float *v2, Simd4Float *v3) {
 #ifdef NSIMD_X86
-  __m128 a = v0->simdInternal_.native_register();
-  __m128 b = v1->simdInternal_.native_register();
-  __m128 c = v2->simdInternal_.native_register();
-  __m128 d = v3->simdInternal_.native_register();
-  _MM_TRANSPOSE4_PS(a, b, c, d);
-  v0->simdInternal_ = pack4f_t(a);
-  v1->simdInternal_ = pack4f_t(b);
-  v2->simdInternal_ = pack4f_t(c);
-  v3->simdInternal_ = pack4f_t(d);
+  __m128 r0 = v0->simdInternal_.native_register();
+  __m128 r1 = v1->simdInternal_.native_register();
+  __m128 r2 = v2->simdInternal_.native_register();
+  __m128 r3 = v3->simdInternal_.native_register();
+  _MM_TRANSPOSE4_PS(r0, r1, r2, r3);
+  v0->simdInternal_ = pack4f_t(r0);
+  v1->simdInternal_ = pack4f_t(r1);
+  v2->simdInternal_ = pack4f_t(r2);
+  v3->simdInternal_ = pack4f_t(r3);
 #else
   float32x4x2_t t0 = vuzpq_f32(v0->simdInternal_.native_register(),
                                v2->simdInternal_.native_register());

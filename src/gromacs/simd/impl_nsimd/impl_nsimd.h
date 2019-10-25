@@ -38,7 +38,11 @@
 
 #include "impl_nsimd_definitions.h"
 #include "impl_nsimd_general.h"
+
+#if GMX_SIMD4_HAVE_DOUBLE != 0
 #include "impl_nsimd_simd4_double.h"
+#endif
+
 #include "impl_nsimd_simd4_float.h"
 #include "impl_nsimd_simd_double.h"
 #include "impl_nsimd_simd_float.h"

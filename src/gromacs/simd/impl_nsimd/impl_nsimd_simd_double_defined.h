@@ -85,7 +85,7 @@ static inline SimdDInt32 gmx_simdcall simdLoadU(const std::int32_t *m,
 static inline void gmx_simdcall storeU(std::int32_t *m, SimdDInt32 a) {
 #if defined(NSIMD_SSE2) || defined(NSIMD_SSE42) || defined(NSIMD_NEON128) ||  \
     defined(NSIMD_AARCH64)
-  store(m, SimdDInt32());
+  store(m, a);
 #else
   nsimd::storeu(m, a.simdInternal_);
 #endif
@@ -337,8 +337,8 @@ static inline SimdDIBool gmx_simdcall operator||(SimdDIBool a, SimdDIBool b) {
 
 static inline bool gmx_simdcall anyTrue(SimdDIBool a) {
 #if defined(NSIMD_SSE2) || defined(NSIMD_SSE42)
-  return nsimd::any(
-      packd_t(a.simdInternal_ & packd_t(_mm_set_epi32(-1, -1, 0, 0))));
+  return nsimd::any(packld_t(_mm_and_si128(a.simdInternal_.native_register(),
+                                           _mm_set_epi32(-1, -1, 0, 0))));
 #elif defined(NSIMD_NEON128) || defined(NSIMD_AARCH64)
   return nsimd::any(packd_t(
       a.simdInternal_ & packd_t(vcombine_s32(vdup_n_s32(-1), vdup_n_s32(0)))));
@@ -433,7 +433,7 @@ static inline SimdDIBool gmx_simdcall cvtB2IB(SimdDBool a) {
 
 static inline SimdDBool gmx_simdcall cvtIB2B(SimdDIBool a) {
 #if defined(NSIMD_SSE2) || defined(NSIMD_SSE42)
-  return {packld_t(_mm_castsi128_pd(_mm_shuffle_epi32(
+  return {nsimd::packl<double>(_mm_castsi128_pd(_mm_shuffle_epi32(
       a.simdInternal_.native_register(), _MM_SHUFFLE(1, 1, 0, 0))))};
 #elif defined(NSIMD_AVX) || defined(NSIMD_AVX2)
   __m128d lo = _mm_castsi128_pd(_mm_unpacklo_epi32(

@@ -48,7 +48,7 @@
 
 #include "gromacs/simd/impl_x86_avx_512/impl_x86_avx_512_general.h"
 
-#else 
+#else
 
 #include "gromacs/simd/impl_arm_neon/impl_arm_neon_general.h"
 
