@@ -1,6 +1,6 @@
 #ifndef GMX_IMPL_NSIMD_FLOAT_DEFINED_H
 #define GMX_IMPL_NSIMD_FLOAT_DEFINED_H
- 
+
 #include <nsimd/cxx_adv_api.hpp>
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
@@ -256,7 +256,7 @@ copysign(SimdFloat a, SimdFloat b)
                                            _mm512_set1_epi32(INT32_MIN), 0xD8))
     };
 }
- 
+
 #elif (defined(NSIMD_AARCH64) || defined(NSIMD_ARM_NEON))
 static inline SimdFloat gmx_simdcall
 frexp(SimdFloat value, SimdFInt32 * exponent)
@@ -311,7 +311,7 @@ reduce(SimdFloat a)
     return vgetq_lane_f32(x, 0);
 }
 
-#else 
+#else
 static inline float gmx_simdcall
 reduce(SimdFloat a)
 {

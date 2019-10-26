@@ -47,6 +47,9 @@
 #include <nsimd/cxx_adv_api_functions.hpp>
 #include <nsimd/nsimd.h>
 
+#include <iostream>
+#include <cstdio>
+
 #include "impl_nsimd_general.h"
 #include "impl_nsimd_simd_float.h"
 #include "gromacs/math/utilities.h"

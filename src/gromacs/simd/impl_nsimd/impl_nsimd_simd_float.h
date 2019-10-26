@@ -361,7 +361,8 @@ static inline SimdFloat gmx_simdcall blend(SimdFloat a, SimdFloat b,
 }
 
 static inline SimdFInt32 gmx_simdcall cvtR2I(SimdFloat a) {
-  return {nsimd::cvt<nsimd::pack<int> >(a.simdInternal_)};
+  return {
+      nsimd::cvt<nsimd::pack<int> >(nsimd::round_to_even(a.simdInternal_))};
 }
 
 static inline SimdFloat gmx_simdcall cvtI2R(SimdFInt32 a) {

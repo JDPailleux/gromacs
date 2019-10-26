@@ -181,13 +181,13 @@ static inline float gmx_simdcall dotProduct(Simd4Float a, Simd4Float b) {
   d = _mm_add_ps(c, _mm_permute_ps(c, _MM_SHUFFLE(2, 1, 2, 1)));
   d = _mm_add_ps(d, _mm_permute_ps(c, _MM_SHUFFLE(3, 2, 3, 2)));
   return *reinterpret_cast<float *>(&d);
-#elif defined(NSIMD_ARM)
+#else
   Simd4Float c;
   c = a * b;
   /* set 4th element to 0, then add all of them */
   c.simdInternal_ =
       pack4f_t(vsetq_lane_f32(0.0f, c.simdInternal_.native_register(), 3));
-  return reduce(c);
+  return nsimd::addv(c.simdInternal_);
 #endif
 }
 

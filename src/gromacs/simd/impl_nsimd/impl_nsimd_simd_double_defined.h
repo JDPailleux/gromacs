@@ -66,7 +66,7 @@ static inline void gmx_simdcall store(std::int32_t *m, SimdDInt32 a) {
 #if defined(NSIMD_SSE2) || defined(NSIMD_SSE42)
   _mm_storel_epi64((__m128i *)m, a.simdInternal_.native_register());
 #elif defined(NSIMD_NEON128) || defined(NSIMD_AARCH64)
-  vst1_s32(m, vget_low_s32(a.simdInternal_.native_register()))};
+  vst1_s32(m, vget_low_s32(a.simdInternal_.native_register()));
 #else
   nsimd::storea(m, a.simdInternal_);
 #endif
@@ -97,8 +97,12 @@ static inline SimdDInt32 gmx_simdcall setZeroDI() {
 
 template <int index>
 static inline std::int32_t gmx_simdcall extract(SimdDInt32 a) {
+#ifdef NSIMD_X86
   return _mm_cvtsi128_si32(
       _mm_srli_si128(a.simdInternal_.native_register(), 4 * index));
+#else
+  return vgetq_lane_s32(a.simdInternal_.native_register(), index);
+#endif
 }
 
 static inline double gmx_simdcall reduce(SimdDouble a) {
@@ -169,7 +173,8 @@ static inline SimdDouble frexp(SimdDouble value, SimdDInt32 *exponent) {
   iExponent = vandq_s64(int64x2_t(value.simdInternal_.native_register()),
                         int64x2_t(exponentMask));
   iExponent = vsubq_s64(vshrq_n_s64(iExponent, 52), exponentBias);
-  exponent->simdInternal_ = packd_t(vmovn_s64(iExponent));
+  exponent->simdInternal_ =
+      packd_t(vcombine_s32(vmovn_s64(iExponent), vdup_n_s32(0)));
 
   return {nsimd::pack<double>(float64x2_t(
       vorrq_s64(vandq_s64(int64x2_t(value.simdInternal_.native_register()),
@@ -248,7 +253,8 @@ static inline SimdDouble ldexp(SimdDouble value, SimdDInt32 exponent) {
       _mm256_mul_pd(value.simdInternal_.native_register(), fExponent))};
 #elif defined(NSIMD_NEON128) || defined(NSIMD_AARCH64)
   const int32x2_t exponentBias = vdup_n_s32(1023);
-  int32x2_t iExponent = vadd_s32(exponent.simdInternal_, exponentBias);
+  int32x2_t iExponent = vadd_s32(
+      vget_low_s32(exponent.simdInternal_.native_register()), exponentBias);
   int64x2_t iExponent64;
 
   if (opt == MathOptimization::Safe) {
@@ -340,8 +346,9 @@ static inline bool gmx_simdcall anyTrue(SimdDIBool a) {
   return nsimd::any(packld_t(_mm_and_si128(a.simdInternal_.native_register(),
                                            _mm_set_epi32(-1, -1, 0, 0))));
 #elif defined(NSIMD_NEON128) || defined(NSIMD_AARCH64)
-  return nsimd::any(packd_t(
-      a.simdInternal_ & packd_t(vcombine_s32(vdup_n_s32(-1), vdup_n_s32(0)))));
+  return nsimd::any(
+      packld_t(vandq_u32(a.simdInternal_.native_register(),
+                         vcombine_u32(vdup_n_u32(-1), vdup_n_u32(0)))));
 #else
   return nsimd::any(a.simdInternal_);
 #endif
@@ -372,8 +379,15 @@ static inline SimdDInt32 gmx_simdcall cvtR2I(SimdDouble a) {
 #elif defined(NSIMD_AVX) || defined(NSIMD_AVX2)
   return {packd_t(_mm256_cvtpd_epi32(a.simdInternal_.native_register()))};
 #elif defined(NSIMD_NEON128) || defined(NSIMD_AARCH64)
-  return {
-      packd_t(vmovn_s64(vcvtnq_s64_f64(a.simdInternal_.native_register())))};
+  std::cerr << "DEBUG: 1a = " << a.simdInternal_ << "\n";
+  packd_t ret = packd_t(vcombine_s32(
+      vmovn_s64(vcvtnq_s64_f64(a.simdInternal_.native_register())),
+      vdup_n_s32(0)));
+  //return {packd_t(vcombine_s32(
+  //    vmovn_s64(vcvtnq_s64_f64(a.simdInternal_.native_register())),
+  //    vdup_n_s32(0)))};
+  std::cerr << "DEBUG: 2a = " << ret << "\n";
+  return {ret};
 #else
   return {packd_t(_mm512_cvtpd_epi32(a.simdInternal_.native_register()))};
 #endif
@@ -401,8 +415,11 @@ static inline SimdDouble gmx_simdcall cvtI2R(SimdDInt32 a) {
   return {nsimd::pack<double>(
       _mm256_cvtepi32_pd(a.simdInternal_.native_register()))};
 #elif defined(NSIMD_NEON128) || defined(NSIMD_AARCH64)
-  return {nsimd::pack<double>(vcvtq_f64_s64(
-      vmovl_s32(vget_low_s64(a.simdInternal_.native_register()))))};
+  std::cerr << "DEBUG: 1a = " << a.simdInternal_ << "\n";
+  nsimd::pack<double> ret = vcvtq_f64_s64(
+      vmovl_s32(vget_low_s32(a.simdInternal_.native_register())));
+  std::cerr << "DEBUG: 2a = " << ret << "\n";
+  return ret;
 #else
   return {nsimd::pack<double>(
       _mm512_cvtepi32_pd(a.simdInternal_.native_register()))};
@@ -423,9 +440,8 @@ static inline SimdDIBool gmx_simdcall cvtB2IB(SimdDBool a) {
   a1 = _mm_shuffle_epi32(a1, _MM_SHUFFLE(2, 0, 2, 0));
   return {packld_t(_mm_blend_epi16(a0, a1, 0xF0))};
 #elif defined(NSIMD_NEON128) || defined(NSIMD_AARCH64)
-  nsimd::pack<unsigned long> a2 = nsimd::cvt<unsigned long>(a.simdInternal_);
-  return {nsimd::packl<double>(
-      vcombine_u32(vqmovn_u64(a2.native_register()), vdup_n_u64(0)))};
+  return {packld_t(vcombine_u32(vqmovn_u64(a.simdInternal_.native_register()),
+                                vdup_n_u32(0)))};
 #else
   return {nsimd::packl<double>((__mmask16)a.simdInternal_)};
 #endif
@@ -444,8 +460,10 @@ static inline SimdDBool gmx_simdcall cvtIB2B(SimdDIBool a) {
   return {nsimd::packl<double>(
       _mm256_insertf128_pd(_mm256_castpd128_pd256(lo), hi, 0x1))};
 #elif defined(NSIMD_NEON128) || defined(NSIMD_AARCH64)
-  return {packld_t(vorrq_u64(vmovl_u32(a.simdInternal_),
-                             vshlq_n_u64(vmovl_u32(a.simdInternal_), 32)))};
+  return {nsimd::packl<double>(vorrq_u64(
+      vmovl_u32(vget_low_u32(a.simdInternal_.native_register())),
+      vshlq_n_u64(vmovl_u32(vget_low_u32(a.simdInternal_.native_register())),
+                  32)))};
 #else
   return {nsimd::packl<double>((__mmask8)a.simdInternal_)};
 #endif
