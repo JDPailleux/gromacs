@@ -149,11 +149,11 @@ static inline SimdDouble gmx_simdcall operator*(SimdDouble a, SimdDouble b) {
 }
 
 static inline SimdDouble gmx_simdcall rsqrt(SimdDouble x) {
-  return {nsimd::rsqrt11(x.simdInternal_)};
+  return {nsimd::rsqrt8(x.simdInternal_)};
 }
 
 static inline SimdDouble gmx_simdcall rcp(SimdDouble x) {
-  return {nsimd::rec11(x.simdInternal_)};
+  return {nsimd::rec8(x.simdInternal_)};
 }
 
 #if (!defined(NSIMD_AVX512_SKYLAKE) && !defined(NSIMD_AVX512_KNL))
@@ -182,7 +182,7 @@ static inline SimdDouble maskzRsqrt(SimdDouble x, SimdDBool m) {
       nsimd::if_else1(nsimd::cvt<nsimd::packl<double> >(m.simdInternal_),
                       x.simdInternal_, nsimd::set1<nsimd::pack<double> >(1.));
 #endif
-  return {nsimd::rsqrt11(x.simdInternal_) & nsimd::to_mask(m.simdInternal_)};
+  return {nsimd::rsqrt8(x.simdInternal_) & nsimd::to_mask(m.simdInternal_)};
 }
 
 static inline SimdDouble maskzRcp(SimdDouble x, SimdDBool m) {
@@ -191,7 +191,7 @@ static inline SimdDouble maskzRcp(SimdDouble x, SimdDBool m) {
       nsimd::if_else1(nsimd::cvt<nsimd::packl<double> >(m.simdInternal_),
                       x.simdInternal_, nsimd::set1<nsimd::pack<double> >(1.));
 #endif
-  return {nsimd::rec11(x.simdInternal_) & nsimd::to_mask(m.simdInternal_)};
+  return {nsimd::rec8(x.simdInternal_) & nsimd::to_mask(m.simdInternal_)};
 }
 #endif
 
