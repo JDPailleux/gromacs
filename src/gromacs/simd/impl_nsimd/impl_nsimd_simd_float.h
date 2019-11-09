@@ -244,11 +244,22 @@ static inline SimdFloat gmx_simdcall min(SimdFloat a, SimdFloat b) {
 }
 
 static inline SimdFloat gmx_simdcall round(SimdFloat x) {
+// GROMACS use a invalid trick of big values so we do the same
+#ifdef NSIMD_SSE2
+  return {nsimd::pack<float>(_mm_cvtepi32_ps(_mm_cvtps_epi32(
+                                x.simdInternal_.native_register())))};
+#else
   return {nsimd::round_to_even(x.simdInternal_)};
+#endif
 }
 
 static inline SimdFloat gmx_simdcall trunc(SimdFloat x) {
+#ifdef NSIMD_SSE2
+  return {nsimd::pack<float>(_mm_cvtepi32_ps(_mm_cvttps_epi32(
+                                x.simdInternal_.native_register())))};
+#else
   return {nsimd::trunc(x.simdInternal_)};
+#endif
 }
 
 //--------------------------------------------------------------------------------------------------
