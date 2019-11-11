@@ -318,6 +318,11 @@ static void spread_coefficients_bsplines_thread(const pmegrid_t                 
                                                 struct pme_spline_work gmx_unused *work)
 {
 
+    __asm__ __volatile__ ("cpuid");
+    __asm__ __volatile__ ("cpuid");
+    __asm__ __volatile__ ("cpuid");
+    __asm__ __volatile__ ("cpuid");
+
     /* spread coefficients from home atoms to local grid */
     real          *grid;
     int            i, nn, n, ithx, ithy, ithz, i0, j0, k0;

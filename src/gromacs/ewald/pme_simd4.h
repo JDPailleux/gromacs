@@ -45,6 +45,7 @@
  * This code does not assume any memory alignment for the grid.
  */
 {
+
     using namespace gmx;
     Simd4Real ty_S0(thy[0]);
     Simd4Real ty_S1(thy[1]);
@@ -83,6 +84,7 @@
         store4U(grid+index_x+(j0+2)*pnz+k0, sum_S2);
         store4U(grid+index_x+(j0+3)*pnz+k0, sum_S3);
     }
+
 }
 #undef PME_SPREAD_SIMD4_ORDER4
 #endif
@@ -94,6 +96,7 @@
  * This code supports pme_order <= 5.
  */
 {
+
     using namespace gmx;
     int              offset;
     int              index;

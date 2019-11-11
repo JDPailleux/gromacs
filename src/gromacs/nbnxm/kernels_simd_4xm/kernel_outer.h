@@ -35,6 +35,7 @@
 
 
 {
+
     using namespace gmx;
 
     /* Unpack pointers for output */
@@ -687,4 +688,5 @@
 #ifdef COUNT_PAIRS
     printf("atom pairs %d\n", npair);
 #endif
+
 }
