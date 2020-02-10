@@ -21,6 +21,9 @@ namespace gmx {
     defined(NSIMD_AARCH64)
 typedef nsimd::pack<float> pack4f_t;
 typedef nsimd::packl<float> packl4f_t;
+#elif defined(NSIMD_SVE)
+typedef nsimd::pack<float, 1, nsimd::aarch64> pack4f_t;
+typedef nsimd::packl<float, 1, nsimd::aarch64> packl4f_t;
 #else
 typedef nsimd::pack<float, 1, nsimd::sse42> pack4f_t;
 typedef nsimd::packl<float, 1, nsimd::sse42> packl4f_t;
