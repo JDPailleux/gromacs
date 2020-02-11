@@ -365,6 +365,32 @@ function(gmx_find_simd_arm_neon_asimd_flags C_FLAGS_RESULT CXX_FLAGS_RESULT C_FL
     set(${CXX_FLAGS_RESULT} ${SIMD_ARM_NEON_ASIMD_CXX_FLAGS_RESULT} CACHE INTERNAL "Result of test for Arm Neon Asimd C++ flags" FORCE)
 endfunction()
 
+# Arm Sve Asimd (64-bit ARM)
+function(gmx_find_simd_arm_sve_asimd_flags C_FLAGS_RESULT CXX_FLAGS_RESULT C_FLAGS_VARIABLE CXX_FLAGS_VARIABLE)
+
+    gmx_find_flags(SIMD_ARM_SVE_ASIMD_C_FLAGS_RESULT SIMD_ARM_SVE_ASIMD_CXX_FLAGS_RESULT
+        "#include<arm_sve.h>
+         int main(){
+           svfloat64_t x=svdup_n_f64(0.5);
+           x=svmla_f64_z(svptrue_b64(), x, x, x);
+           svbool_t y=svcmpeq_f64(svptrue_b64(), x, x);
+           return svptest_any(svptrue_b64(), y);
+         }"
+        TOOLCHAIN_C_FLAGS TOOLCHAIN_CXX_FLAGS
+        SIMD_ARM_SVE_ASIMD_C_FLAGS SIMD_ARM_SVE_ASIMD_CXX_FLAGS
+        "-march=armv8-a+sve" "")
+
+
+    if(${SIMD_ARM_SVE_ASIMD_C_FLAGS_RESULT})
+      set(${C_FLAGS_VARIABLE} "${TOOLCHAIN_C_FLAGS} ${SIMD_ARM_SVE_ASIMD_C_FLAGS}" CACHE INTERNAL "C flags required for Arm SVE Asimd instructions")
+    endif()
+    if(${SIMD_ARM_SVE_ASIMD_CXX_FLAGS_RESULT})
+      set(${CXX_FLAGS_VARIABLE} "${TOOLCHAIN_CXX_FLAGS} ${SIMD_ARM_SVE_ASIMD_CXX_FLAGS}" CACHE INTERNAL "C++ flags required for Arm SVE Asimd instructions")
+    endif()
+    set(${C_FLAGS_RESULT} ${SIMD_ARM_SVE_ASIMD_C_FLAGS_RESULT} CACHE INTERNAL "Result of test for Arm SVE Asimd C flags" FORCE)
+    set(${CXX_FLAGS_RESULT} ${SIMD_ARM_SVE_ASIMD_CXX_FLAGS_RESULT} CACHE INTERNAL "Result of test for Arm SVE Asimd C++ flags" FORCE)
+endfunction()
+
 # IBM VMX (power6)
 function(gmx_find_simd_ibm_vmx_flags C_FLAGS_RESULT CXX_FLAGS_RESULT C_FLAGS_VARIABLE CXX_FLAGS_VARIABLE)
 
