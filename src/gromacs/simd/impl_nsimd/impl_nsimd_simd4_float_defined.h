@@ -21,7 +21,7 @@ namespace gmx {
     defined(NSIMD_AARCH64)
 typedef nsimd::pack<float> pack4f_t;
 typedef nsimd::packl<float> packl4f_t;
-#elif defined(NSIMD_SVE)
+#elif defined(NSIMD_SVE512)
 typedef nsimd::pack<float, 1, nsimd::aarch64> pack4f_t;
 typedef nsimd::packl<float, 1, nsimd::aarch64> packl4f_t;
 #else
@@ -264,7 +264,7 @@ static inline Simd4Float gmx_simdcall blend(Simd4Float a, Simd4Float b,
 }
 
 static inline float gmx_simdcall reduce(Simd4Float a) {
-  return {nsimd::addv(a.simdInternal_)};
+  return nsimd::addv(a.simdInternal_);
 }
 
 } // namespace gmx

@@ -136,6 +136,24 @@ template <int align>
 static inline void gmx_simdcall
 transposeScatterStoreU(float *base, const std::int32_t offset[], SimdFloat v0,
                        SimdFloat v1, SimdFloat v2) {
+  SimdFInt32 simdoffset = simdLoad(offset, SimdFInt32Tag());
+  if (align > 2) {
+    simdoffset = fastMultiply<align>(simdoffset);
+  }
+  constexpr size_t scale = (align > 2) ? sizeof(float) : sizeof(float) * align;
+
+  _mm512_i32scatter_ps(base, simdoffset.simdInternal_.native_register(),
+                       v0.simdInternal_.native_register(), scale);
+  _mm512_i32scatter_ps(&(base[1]), simdoffset.simdInternal_.native_register(),
+                       v1.simdInternal_.native_register(), scale);
+  _mm512_i32scatter_ps(&(base[2]), simdoffset.simdInternal_.native_register(),
+                       v2.simdInternal_.native_register(), scale);
+}
+
+template <int align>
+static inline void gmx_simdcall
+transposeScatterStoreU(float *base, const std::int32_t offset[], SimdFloat v0,
+                       SimdFloat v1, SimdFloat v2) {
   __m128 t1, t2;
 
   // general case, not aligned to 4-byte boundary
@@ -1565,6 +1583,7 @@ static inline void gmx_simdcall storeDualHsimd(float *m0, float *m1,
                       _mm512_castps_pd(a.simdInternal_.native_register()), 1));
 }
 
+
 static inline void gmx_simdcall incrDualHsimd(float *m0, float *m1,
                                               SimdFloat a) {
   assert(std::size_t(m0) % 32 == 0);
@@ -1971,6 +1990,431 @@ static inline float gmx_simdcall reduceIncr4ReturnSum(float *m, SimdFloat v0,
   store(m, v2);
 
   return reduce(v0);
+}
+
+#elif (defined(NSIMD_SVE512))
+namespace {
+template <int align>
+static inline void gmx_simdcall gatherLoadBySimdIntTranspose(const float *,
+                                                             SimdFInt32) {
+  // Nothing to do. Termination of recursion.
+}
+} // namespace
+
+template <int align, typename... Targs>
+static inline void gmx_simdcall gatherLoadBySimdIntTranspose(const float *base,
+                                                             SimdFInt32 offset,
+                                                             SimdFloat *v,
+                                                             Targs... Fargs) {
+  // For align 1 or 2: No multiplication of offset is needed
+  if (align > 2) {
+    offset.simdInternal_ =
+      nsimd::pack<int>::simd_vector(
+          svmul_n_s32_x(svptrue_b32(),
+          offset.simdInternal_.native_register(),
+          align));
+  }
+  // For align 2: Scale of 2*sizeof(float) is used (maximum supported scale)
+  constexpr int align_ = (align > 2) ? 1 : align;
+
+  svint32_t offset_ = svmul_n_s32_x(svptrue_b32(),
+                                    offset.simdInternal_.native_register(),
+                                    align_ * sizeof(float));
+
+  v->simdInternal_ =
+    nsimd::pack<float>::simd_vector(
+      svld1_gather_s32offset_f32(svptrue_b32(),
+                                 base,
+                                 offset_));
+  // Gather remaining elements. Avoid extra multiplication (new align is 1 or
+  // 2).
+  gatherLoadBySimdIntTranspose<align_>(base + 1, offset, Fargs...);
+}
+
+static const int c_simdBestPairAlignmentFloat = 2;
+
+template <int align, typename... Targs>
+static inline void gmx_simdcall gatherLoadUBySimdIntTranspose(
+    const float *base, SimdFInt32 offset, SimdFloat *v, Targs... Fargs) {
+  gatherLoadBySimdIntTranspose<align>(base, offset, v, Fargs...);
+}
+
+template <int align, typename... Targs>
+static inline void gmx_simdcall
+gatherLoadTranspose(const float *base, const std::int32_t offset[],
+                    SimdFloat *v, Targs... Fargs) {
+  gatherLoadBySimdIntTranspose<align>(base, simdLoad(offset, SimdFInt32Tag()),
+                                      v, Fargs...);
+}
+
+template <int align, typename... Targs>
+static inline void gmx_simdcall
+gatherLoadUTranspose(const float *base, const std::int32_t offset[],
+                    SimdFloat *v, Targs... Fargs) {
+  gatherLoadBySimdIntTranspose<align>(base, simdLoad(offset, SimdFInt32Tag()),
+                                      v, Fargs...);
+}
+
+template <int align>
+static inline void gmx_simdcall
+transposeScatterStoreU(float *base, const std::int32_t offset[], SimdFloat v0,
+                       SimdFloat v1, SimdFloat v2) {
+  svint32_t simdoffset = simdLoad(offset,
+      SimdFInt32Tag()).simdInternal_.native_register();
+
+  constexpr size_t scale = (align > 2) ? sizeof(float) : sizeof(float) * align;
+
+  if (align > 2) {
+    simdoffset = svmul_n_s32_x(svptrue_b32(), simdoffset, align * scale);
+  } else {
+    simdoffset = svmul_n_s32_x(svptrue_b32(), simdoffset, scale);
+  }
+
+  svst1_scatter_s32offset_f32(svptrue_b32(), base, simdoffset,
+      v0.simdInternal_.native_register());
+  svst1_scatter_s32offset_f32(svptrue_b32(), &(base[1]), simdoffset,
+      v1.simdInternal_.native_register());
+  svst1_scatter_s32offset_f32(svptrue_b32(), &(base[2]), simdoffset,
+      v2.simdInternal_.native_register());
+}
+
+template <int align>
+static inline void gmx_simdcall
+transposeScatterIncrU(float *base, const std::int32_t offset[], SimdFloat v0,
+                      SimdFloat v1, SimdFloat v2) {
+  svfloat32_t t0 = svzip1(v0.simdInternal_.native_register(),
+      v1.simdInternal_.native_register());
+  svfloat32_t t1 = svzip2(v0.simdInternal_.native_register(),
+      v1.simdInternal_.native_register());
+  svfloat32_t t2 = svzip1(v2.simdInternal_.native_register(),
+      v2.simdInternal_.native_register());
+  svfloat32_t t3 = svzip2(v2.simdInternal_.native_register(),
+      v2.simdInternal_.native_register());
+
+  nsimd_sve512_vf32 t[4];
+  t[0] = svreinterpret_f32_f64(svzip1_f64(svreinterpret_f64_f32(t0),
+        svreinterpret_f64_f32(t2)));
+  t[1] = svreinterpret_f32_f64(svzip2_f64(svreinterpret_f64_f32(t0),
+        svreinterpret_f64_f32(t2)));
+  t[2] = svreinterpret_f32_f64(svzip1_f64(svreinterpret_f64_f32(t1),
+        svreinterpret_f64_f32(t3)));
+  t[3] = svreinterpret_f32_f64(svzip2_f64(svreinterpret_f64_f32(t1),
+        svreinterpret_f64_f32(t3)));
+
+  nsimd_sve512_vi32 voffset = svld1(svptrue_b32(), offset);
+  voffset = svmul_n_s32_x(svptrue_b32(), voffset, align);
+  std::int32_t o[16];
+  svst1(svptrue_b32(), o, voffset);
+
+  svbool_t mask = svwhilelt_b32(GMX_SIMD_FINT32_WIDTH - 3,
+      GMX_SIMD_FLOAT_WIDTH);
+  svbool_t mask_compact = svnot_b_z(svptrue_b32(),
+      svwhilelt_b32(GMX_SIMD_FINT32_WIDTH - 4, GMX_SIMD_FLOAT_WIDTH));
+
+  for (int i=0; i<4; ++i) {
+    nsimd_sve512_vf32 res[4];
+
+    res[0] = svld1(mask, base + o[i]);
+    res[0] = svadd_x(mask, res[0], t[0]);
+    svst1(mask, base + o[i], res[0]);
+    t[0] = svcompact_f32(mask_compact, t[0]);
+
+    res[1] = svld1(mask, base + o[i+4]);
+    res[1] = svadd_x(mask, res[1], t[1]);
+    svst1(mask, base + o[i+4], res[1]);
+    t[1] = svcompact_f32(mask_compact, t[1]);
+
+    res[2] = svld1(mask, base + o[i+8]);
+    res[2] = svadd_x(mask, res[2], t[2]);
+    svst1(mask, base + o[i+8], res[2]);
+    t[2] = svcompact_f32(mask_compact, t[2]);
+
+    res[3] = svld1(mask, base + o[i+12]);
+    res[3] = svadd_x(mask, res[3], t[3]);
+    svst1(mask, base + o[i+12], res[3]);
+    t[3] = svcompact_f32(mask_compact, t[3]);
+  }
+}
+
+template <int align>
+static inline void gmx_simdcall
+transposeScatterDecrU(float *base, const std::int32_t offset[], SimdFloat v0,
+                      SimdFloat v1, SimdFloat v2) {
+  svfloat32_t t0 = svzip1(v0.simdInternal_.native_register(),
+      v1.simdInternal_.native_register());
+  svfloat32_t t1 = svzip2(v0.simdInternal_.native_register(),
+      v1.simdInternal_.native_register());
+  svfloat32_t t2 = svzip1(v2.simdInternal_.native_register(),
+      v2.simdInternal_.native_register());
+  svfloat32_t t3 = svzip2(v2.simdInternal_.native_register(),
+      v2.simdInternal_.native_register());
+
+  nsimd_sve512_vf32 t[4];
+  t[0] = svreinterpret_f32_f64(svzip1_f64(svreinterpret_f64_f32(t0),
+        svreinterpret_f64_f32(t2)));
+  t[1] = svreinterpret_f32_f64(svzip2_f64(svreinterpret_f64_f32(t0),
+        svreinterpret_f64_f32(t2)));
+  t[2] = svreinterpret_f32_f64(svzip1_f64(svreinterpret_f64_f32(t1),
+        svreinterpret_f64_f32(t3)));
+  t[3] = svreinterpret_f32_f64(svzip2_f64(svreinterpret_f64_f32(t1),
+        svreinterpret_f64_f32(t3)));
+
+  nsimd_sve512_vi32 voffset = svld1(svptrue_b32(), offset);
+  voffset = svmul_n_s32_x(svptrue_b32(), voffset, align);
+  std::int32_t o[16];
+  svst1(svptrue_b32(), o, voffset);
+
+  svbool_t mask = svwhilelt_b32(GMX_SIMD_FINT32_WIDTH - 3,
+      GMX_SIMD_FLOAT_WIDTH);
+  svbool_t mask_compact = svnot_b_z(svptrue_b32(),
+      svwhilelt_b32(GMX_SIMD_FINT32_WIDTH - 4, GMX_SIMD_FLOAT_WIDTH));
+
+  for (int i=0; i<4; ++i) {
+    nsimd_sve512_vf32 res[4];
+
+    res[0] = svld1(mask, base + o[i]);
+    res[0] = svsub_x(mask, res[0], t[0]);
+    svst1(mask, base + o[i], res[0]);
+    t[0] = svcompact_f32(mask_compact, t[0]);
+
+    res[1] = svld1(mask, base + o[i+4]);
+    res[1] = svsub_x(mask, res[1], t[1]);
+    svst1(mask, base + o[i+4], res[1]);
+    t[1] = svcompact_f32(mask_compact, t[1]);
+
+    res[2] = svld1(mask, base + o[i+8]);
+    res[2] = svsub_x(mask, res[2], t[2]);
+    svst1(mask, base + o[i+8], res[2]);
+    t[2] = svcompact_f32(mask_compact, t[2]);
+
+    res[3] = svld1(mask, base + o[i+12]);
+    res[3] = svsub_x(mask, res[3], t[3]);
+    svst1(mask, base + o[i+12], res[3]);
+    t[3] = svcompact_f32(mask_compact, t[3]);
+  }
+}
+
+static inline void gmx_simdcall expandScalarsToTriplets(SimdFloat scalar,
+                                                        SimdFloat *triplets0,
+                                                        SimdFloat *triplets1,
+                                                        SimdFloat *triplets2) {
+  const unsigned int table0[] = {0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4,
+    5};
+  const unsigned int table1[] = {5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9, 10,
+    10};
+  const unsigned int table2[] = {10, 11, 11, 11, 12, 12, 12, 13, 13, 13, 14,
+    14, 14, 15, 15, 15};
+
+
+  triplets0->simdInternal_ = nsimd::pack<float>::simd_vector(
+      svtbl(scalar.simdInternal_.native_register(),
+          svld1(svptrue_b32(), table0)));
+  triplets1->simdInternal_ = nsimd::pack<float>::simd_vector(
+      svtbl(scalar.simdInternal_.native_register(),
+          svld1(svptrue_b32(), table1)));
+  triplets2->simdInternal_ = nsimd::pack<float>::simd_vector(
+        svtbl(scalar.simdInternal_.native_register(),
+          svld1(svptrue_b32(), table2)));
+}
+
+static inline float gmx_simdcall reduceIncr4ReturnSum(float *m, SimdFloat v0,
+                                                      SimdFloat v1,
+                                                      SimdFloat v2,
+                                                      SimdFloat v3) {
+  assert(std::size_t(m) % 16 == 0);
+
+  float t0=svaddv(svptrue_b32(), v0.simdInternal_.native_register());
+  float t1=svaddv(svptrue_b32(), v1.simdInternal_.native_register());
+  float t2=svaddv(svptrue_b32(), v2.simdInternal_.native_register());
+  float t3=svaddv(svptrue_b32(), v3.simdInternal_.native_register());
+
+  // TODO: bench if it is worth to use simd for the following lines
+  m[0] += t0;
+  m[1] += t1;
+  m[2] += t2;
+  m[3] += t3;
+
+  return t0 + t1 + t2 + t3;
+}
+
+/*************************************
+ * Half-simd-width utility functions *
+ *************************************/
+
+static inline SimdFloat gmx_simdcall loadDualHsimd(const float *m0,
+                                                   const float *m1) {
+  assert(std::size_t(m0) % 16 == 0);
+  assert(std::size_t(m1) % 16 == 0);
+
+  const svbool_t mask =
+      svwhilelt_b32(GMX_SIMD_FLOAT_WIDTH/2, GMX_SIMD_FLOAT_WIDTH);
+
+  return SimdFloat(nsimd::pack<float>::simd_vector(
+        svsplice_f32(mask,
+                     svld1_f32(svptrue_b32(), m0),
+                     svld1_f32(svptrue_b32(), m1))));
+}
+
+static inline SimdFloat gmx_simdcall loadDuplicateHsimd(const float *m) {
+  assert(std::size_t(m) % 16 == 0);
+
+  svfloat32_t tmp = svld1_f32(svptrue_b32(), m);
+
+  const svbool_t mask =
+      svwhilelt_b32(GMX_SIMD_FLOAT_WIDTH/2, GMX_SIMD_FLOAT_WIDTH);
+  return SimdFloat(nsimd::pack<float>::simd_vector(svsplice_f32(mask, tmp, tmp)));
+
+}
+
+static inline SimdFloat gmx_simdcall loadU1DualHsimd(const float *m) {
+  assert(std::size_t(m) % 16 == 0);
+
+  svfloat32_t tmp = svdup_f32_x(svptrue_b32(), m[1]);
+  const svbool_t mask =
+      svwhilelt_b32(GMX_SIMD_FLOAT_WIDTH/2, GMX_SIMD_FLOAT_WIDTH);
+  return SimdFloat(nsimd::pack<float>::simd_vector(svdup_f32_m(tmp, mask, m[0])));
+}
+
+static inline void gmx_simdcall storeDualHsimd(float *m0, float *m1,
+                                               SimdFloat a) {
+  assert(std::size_t(m0) % 32 == 0);
+  assert(std::size_t(m1) % 32 == 0);
+
+  const svbool_t mask =
+      svwhilelt_b32(GMX_SIMD_FLOAT_WIDTH/2, GMX_SIMD_FLOAT_WIDTH);
+
+  svst1(mask, m0, a.simdInternal_.native_register());
+  svst1(mask,
+        m1,
+        svcompact(svnot_b_z(svptrue_b32(), mask),
+                  a.simdInternal_.native_register()));
+}
+
+
+static inline void gmx_simdcall incrDualHsimd(float *m0, float *m1,
+                                              SimdFloat a) {
+  // Beware, m0 and m1 may overlap
+  assert(std::size_t(m0) % 32 == 0);
+  assert(std::size_t(m1) % 32 == 0);
+
+  const svbool_t mask =
+      svwhilelt_b32(GMX_SIMD_FLOAT_WIDTH/2, GMX_SIMD_FLOAT_WIDTH);
+
+  svfloat32_t a_ = a.simdInternal_.native_register();
+  svfloat32_t x;
+
+  x = svld1_f32(mask, m0);
+  x = svadd_f32_z(mask, x, a_);
+  svst1_f32(mask, m0, x);
+
+  a_ = svcompact_f32(svnot_z(svptrue_b32(), mask), a_);
+
+  x = svld1_f32(mask, m1);
+  x = svadd_f32_z(mask, x, a_);
+  svst1_f32(mask, m1, x);
+}
+
+static inline void gmx_simdcall decrHsimd(float *m, SimdFloat a) {
+  assert(std::size_t(m) % 16 == 0);
+
+  const svbool_t mask =
+      svwhilelt_b32(GMX_SIMD_FLOAT_WIDTH/2, GMX_SIMD_FLOAT_WIDTH);
+  svfloat32_t asum = svadd_f32_x(mask,
+      a.simdInternal_.native_register(),
+      svcompact_f32(svnot_z(svptrue_b32(), mask), a.simdInternal_.native_register()));
+
+  svst1_f32(mask, m, svsub_f32_x(mask, svld1_f32(mask, m), asum));
+}
+
+template <int align>
+static inline void gmx_simdcall gatherLoadTransposeHsimd(
+    const float *base0, const float *base1, const std::int32_t offset[],
+    SimdFloat *v0, SimdFloat *v1) {
+  const svbool_t mask =
+      svwhilelt_b32(GMX_SIMD_FLOAT_WIDTH/2, GMX_SIMD_FLOAT_WIDTH);
+
+  svint64_t voffsets = svunpklo_s64(svld1(mask, offset));
+
+  if (align > 2) {
+    voffsets = svmul_n_s64_x(svptrue_b64(), voffsets, align/2);
+  }
+
+  svfloat32_t tmp1 =
+    svreinterpret_f32_f64(svld1_gather_s64index_f64(svptrue_b64(),
+            reinterpret_cast<const double*>(base0), voffsets));
+  svfloat32_t tmp2 =
+    svreinterpret_f32_f64(svld1_gather_s64index_f64(svptrue_b64(),
+            reinterpret_cast<const double*>(base1), voffsets));
+
+  svfloat32_t inter1 = svtrn1(tmp1, tmp2);
+  svfloat32_t inter2 = svtrn1(tmp2, tmp1);
+  svfloat32_t inter3 = svtrn2(tmp1, tmp2);
+  svfloat32_t inter4 = svtrn2(tmp2, tmp1);
+
+  v0->simdInternal_ = nsimd::pack<float>::simd_vector(svuzp1(inter1, inter2));
+  v1->simdInternal_ = nsimd::pack<float>::simd_vector(svuzp1(inter3, inter4));
+}
+
+static inline float gmx_simdcall reduceIncr4ReturnSumHsimd(float *m,
+                                                           SimdFloat v0,
+                                                           SimdFloat v1) {
+  const svbool_t mask =
+      svwhilelt_b32(GMX_SIMD_FLOAT_WIDTH/2, GMX_SIMD_FLOAT_WIDTH);
+  const svbool_t inv_mask = svnot_z(svptrue_b32(), mask);
+
+  float t0 = svaddv(mask, v0.simdInternal_.native_register());
+  float t1 = svaddv(inv_mask, v0.simdInternal_.native_register());
+  float t2 = svaddv(mask, v1.simdInternal_.native_register());
+  float t3 = svaddv(inv_mask, v1.simdInternal_.native_register());
+
+  // TODO: bench if it is worth to use simd for the following lines
+  m[0] += t0;
+  m[1] += t1;
+  m[2] += t2;
+  m[3] += t3;
+
+  return t0 + t1 + t2 + t3;
+}
+
+static inline SimdFloat gmx_simdcall loadUNDuplicate4(const float *f) {
+  // TODO: bench if svindex() + svdiv() is faster than svld1()
+  const unsigned int table[] = {0u, 0u, 0u, 0u, 1u, 1u, 1u, 1u,
+                                2u, 2u, 2u, 2u, 3u, 3u, 3u, 3u};
+  const svbool_t mask =
+      svwhilelt_b32(GMX_SIMD_FLOAT_WIDTH - 4, GMX_SIMD_FLOAT_WIDTH);
+
+  return SimdFloat(nsimd::pack<float>::simd_vector(
+        svtbl(svld1(mask, f), svld1(svptrue_b32(), table))));
+}
+
+static inline SimdFloat gmx_simdcall load4DuplicateN(const float *f) {
+  return SimdFloat(nsimd::pack<float>::simd_vector(
+        svdupq_lane(svldnf1(svptrue_b32(), f), 0u)));
+}
+
+static inline SimdFloat gmx_simdcall loadU4NOffset(const float *f,
+                                                   int offset) {
+  const unsigned long int table0[] = {0lu, 0lu, 1lu, 1lu, 2lu, 2lu, 3lu, 3lu};
+  const unsigned long int table1[] = {0lu, 2lu, 0lu, 2lu, 0lu, 2lu, 0lu, 2lu};
+
+
+  svuint64_t voffset = svmul_n_u64_x(svptrue_b64(),
+                                    svld1(svptrue_b64(), table0),
+                                    offset);
+
+  voffset = svadd_x(svptrue_b64(),
+                    voffset,
+                    svld1(svptrue_b64(), table1));
+
+  voffset = svmul_n_u64_x(svptrue_b64(),
+                          voffset,
+                          sizeof(float));
+
+  return SimdFloat(nsimd::pack<float>::simd_vector(
+        svreinterpret_f32_f64(
+          svld1_gather_u64offset_f64(svptrue_b64(),
+                                      reinterpret_cast<const double*>(f),
+                                      voffset))));
 }
 
 #endif

@@ -367,6 +367,82 @@ static inline SimdFloat gmx_simdcall rcpIter(SimdFloat lu, SimdFloat x) {
                                 x.simdInternal_.native_register()))};
 }
 
+#elif (defined(NSIMD_SVE512))
+static inline SimdFloat gmx_simdcall frexp(SimdFloat value,
+                                           SimdFInt32 *exponent) {
+  const svint32_t exponentMask = svdup_s32(0x7F800000);
+  const svint32_t mantissaMask = svdup_s32(0x807FFFFF);
+  const svint32_t exponentBias =
+      svdup_s32(126); // add 1 to make our definition identical to frexp()
+  const svfloat32_t half = svdup_f32(0.5f);
+
+  svint32_t iExponent = svand_x(svptrue_b32(),
+      svreinterpret_s32_f32(value.simdInternal_.native_register()),
+      exponentMask);
+  iExponent = svsub_s32_x(svptrue_b32(),
+                          svreinterpret_s32_u32(svlsr_x(svptrue_b32(),
+                          svreinterpret_u32_s32(iExponent), 23)),
+                          exponentBias);
+
+  exponent->simdInternal_ = nsimd::pack<int>::simd_vector(iExponent);
+
+  return SimdFloat(nsimd::pack<float>::simd_vector(svreinterpret_f32_s32(svorr_s32_x(svptrue_b32(),
+        svand_x(svptrue_b32(),
+          svreinterpret_s32_f32(value.simdInternal_.native_register()),
+          mantissaMask), svreinterpret_s32_f32(half)))));
+}
+
+template <MathOptimization opt = MathOptimization::Safe>
+static inline SimdFloat gmx_simdcall ldexp(SimdFloat value,
+                                           SimdFInt32 exponent) {
+  const svint32_t exponentBias = svdup_s32(127);
+  svint32_t iExponent = svadd_s32_x(svptrue_b32(),
+      exponent.simdInternal_.native_register(), exponentBias);
+
+  if (opt == MathOptimization::Safe) {
+    // Make sure biased argument is not negative
+    iExponent = svmax_s32_x(svptrue_b32(), iExponent, svdup_s32(0));
+  }
+
+  iExponent = svlsl_n_s32_x(svptrue_b32(), iExponent, 23);
+
+  return SimdFloat(nsimd::pack<float>::simd_vector(svmul_f32_x(svptrue_b32(), value.simdInternal_.native_register(),
+                    svreinterpret_f32_s32(iExponent))));
+}
+
+static inline float gmx_simdcall reduce(SimdFloat a) {
+  return svaddv_f32(svptrue_b32(), a.simdInternal_.native_register());
+}
+
+template <int index>
+gmx_simdcall static inline std::int32_t extract(SimdFInt32 a) {
+  const svbool_t mask = svwhilelt_b32_u32(GMX_SIMD_FLOAT_WIDTH - index,
+      GMX_SIMD_FLOAT_WIDTH);
+  return svlasta(mask, a.simdInternal_.native_register());
+}
+
+static inline SimdFInt32 gmx_simdcall cvttR2I(SimdFloat a) {
+  return SimdFInt32(nsimd::pack<int>::simd_vector(
+    svcvt_s32_f32_x(svptrue_b32(), a.simdInternal_.native_register())
+    ));
+}
+
+static inline SimdFloat gmx_simdcall rsqrtIter(SimdFloat lu, SimdFloat x) {
+  return SimdFloat(nsimd::pack<float>::simd_vector(
+        svmul_f32_x(svptrue_b32(), lu.simdInternal_.native_register(),
+                    svrsqrts_f32(svmul_f32_x(svptrue_b32(),
+                                             lu.simdInternal_.native_register(),
+                                             lu.simdInternal_.native_register()),
+                                             x.simdInternal_.native_register()))));
+}
+
+static inline SimdFloat gmx_simdcall rcpIter(SimdFloat lu, SimdFloat x) {
+  return SimdFloat(nsimd::pack<float>::simd_vector(
+    svmul_f32_x(svptrue_b32(), lu.simdInternal_.native_register(),
+                    svrecps_f32(lu.simdInternal_.native_register(),
+                                x.simdInternal_.native_register()))));
+}
+
 #endif
 
 #endif

@@ -243,6 +243,18 @@ elseif(GMX_SIMD_ACTIVE STREQUAL "ARM_SVE")
     set(GMX_SIMD_${GMX_SIMD_ACTIVE} 1)
     set(SIMD_STATUS_MESSAGE "Enabling ARM (AArch64) SVE Advanced SIMD instructions using CXX flags: ${SIMD_ARM_SVE_ASIMD_CXX_FLAGS}")
 
+elseif(GMX_SIMD_ACTIVE STREQUAL "ARM_SVE512")
+    gmx_find_simd_arm_sve_asimd_flags(SIMD_ARM_SVE512_ASIMD_C_SUPPORTED SIMD_ARM_SVE512_ASIMD_CXX_SUPPORTED
+                                       SIMD_ARM_SVE512_ASIMD_C_FLAGS SIMD_ARM_SVE512_ASIMD_CXX_FLAGS)
+    if(NOT SIMD_ARM_SVE512_ASIMD_C_SUPPORTED OR NOT SIMD_ARM_SVE512_ASIMD_CXX_SUPPORTED)
+        gmx_give_fatal_error_when_simd_support_not_found("ARM (AArch64) SVE512 Advanced SIMD" "particularly gcc version 4.9 or later, or disable SIMD support (slower)" "${SUGGEST_BINUTILS_UPDATE}")
+    endif()
+
+    set(SIMD_C_FLAGS "${SIMD_ARM_SVE512_ASIMD_C_FLAGS}")
+    set(SIMD_CXX_FLAGS "${SIMD_ARM_SVE512_ASIMD_CXX_FLAGS}")
+    set(GMX_SIMD_${GMX_SIMD_ACTIVE} 1)
+    set(SIMD_STATUS_MESSAGE "Enabling ARM (AArch64) SVE512 Advanced SIMD instructions using CXX flags: ${SIMD_ARM_SVE512_ASIMD_CXX_FLAGS}")
+
 
 elseif(GMX_SIMD_ACTIVE STREQUAL "ARM_NEON_ASIMD")
 

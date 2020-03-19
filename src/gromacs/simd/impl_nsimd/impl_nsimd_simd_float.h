@@ -52,7 +52,7 @@
 
 namespace gmx {
 
-class SimdFloat {
+NSIMD_STRUCT SimdFloat {
 public:
   SimdFloat() {}
 
@@ -64,7 +64,7 @@ public:
   nsimd::pack<float> simdInternal_;
 };
 
-class SimdFInt32 {
+NSIMD_STRUCT SimdFInt32 {
 public:
   SimdFInt32() {}
 
@@ -77,7 +77,7 @@ public:
   nsimd::pack<int> simdInternal_;
 };
 
-class SimdFBool {
+NSIMD_STRUCT SimdFBool {
 public:
   SimdFBool() {}
 
@@ -91,7 +91,7 @@ public:
   nsimd::packl<float> simdInternal_;
 };
 
-class SimdFIBool {
+NSIMD_STRUCT SimdFIBool {
 public:
   SimdFIBool() {}
 
