@@ -132,9 +132,71 @@ def draw_graph(output_filename, title, data):
 
 # -----------------------------------------------------------------------------
 
+def get_cpp_loc(output_filename, cpp_files):
+    cmd = ' '.join(['sloccount'] + cpp_files) + ' >{}'.format(output_filename)
+    if (os.system(cmd) != 0):
+        debug('get_cpp_loc: error: {}'.format(cmd))
+        return 0
+    with open(output_filename, 'rb') as fin:
+        for line in perf_file:
+            if line.startswith('cpp:'):
+                tab = line.split(' ')
+                return int([i for i in tab[1:] if i != ''][0])
+    return 0
+
+def draw_graph_loc_simd(output_filename, simd_dir):
+    native_simd_backends = [
+        'impl_arm_neon_asimd',
+        'impl_x86_avx_256',
+        'impl_x86_avx_512_knl',
+        'impl_x86_sse2',
+        'scalar',
+        'impl_arm_neon',
+        'impl_x86_avx_128_fma',
+        'impl_x86_avx2_256',
+        'impl_x86_avx_512',
+        'impl_x86_sse4_1'
+    ]
+    native_simd_loc = get_cpp_loc('native_simd_loc.txt',
+                                  [os.path.join(simd_dir, i) \
+                                   for i in native_simd_backends])
+    nsimd_loc = get_cpp_loc('nsimd_loc.txt',
+                            os.path.join(simd_dir, 'impl_nsimd'))
+
+    plt.rcParams.update({'figure.autolayout': True})
+    plt.style.use('ggplot')
+    fig, ax = plt.subplots()
+
+    labels = tuple(['Without NSIMD', 'With NSIMD'])
+    values = tuple([native_simd_loc, nsimd_loc])
+    n = len(labels)
+
+    debug(title)
+    debug('values = {}'.format(values))
+    debug('labels = {}'.format(labels))
+    debug('- - - - -')
+
+    ind = np.arange(n)
+    bars = ax.barh(ind, values)
+    for i in range(n):
+        if labels[i] = 'With NSIMD' == -1:
+            bars[i].set_color('sandybrown')
+        else:
+            bars[i].set_color('cadetblue')
+        ax.text(0, i, ' {:0.2f}'.format(values[i]), color='black', va='center')
+    ax.set(title=title)
+    plt.gca().invert_yaxis()
+    plt.yticks(ind, labels)
+    plt.savefig(output_filename)
+
+# -----------------------------------------------------------------------------
+# argv[1]  == GROMACS SIMD backends directory
+# argv[2:] == List of log files
+
 if __name__ == "__main__":
     res = dict()
-    for filename in sys.argv[1:]:
+    draw_graph_loc_simd('simd-loc-gromacs.pdf', sys.argv[1])
+    for filename in sys.argv[2:]:
         debug('input = {}'.format(filename))
         if not os.path.isfile(filename):
             print('-- Warning: no performance file named ' + filename)

@@ -1,0 +1,88 @@
+\documentclass[shrink, compress, mathserif, 10pt, xcolor=dvipsnames,
+               aspectratio=169]{beamer}
+\usetheme{Scale}
+
+\usepackage{textcomp}
+%%\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{helvet}
+
+\title{Bibliothèque NSIMD}
+\subtitle{Application à GROMACS, le logiciel de simulation en dynamique
+          moléculaire}
+\date{\today}
+\author{Agenium Scale}
+
+\begin{document}
+
+\begin{frame}[plain]
+  \maketitle
+\end{frame}
+
+\begin{frame}{NSIMD}
+  \begin{itemize}
+    \item
+      NSIMD Bibliothèque de calcul C, C++98 jusqu'à C++20 open source offrant
+      une abstraction sur les jeux d'instructions SIMD des processeurs.
+    \item
+      NSIMD supporte les dernières technologies: Intel AVX-512, Arm SVE.
+    \item
+      NSIMD supporte également les GPUs, NVIDIA et AMD.
+    \item
+      Réduction drastique des coûts de développement pour l'optimisation
+      des codes nécessitant du calcul et de la portabilité.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Application à GROMACS}
+  \begin{itemize}
+    \item
+      Logiciel de simulation en dynamique moléculaire développé initialement
+      par l'université de Groningue.
+    \item
+      Très bien optimisé pour les CPUs en utilisant les extensions SIMD.
+    \item
+      Un dossier de code pour chaque extension SIMD supportée par GROMACS.
+    \item
+      NSIMD a été ajoutée comme une ``nouvelle extension SIMD" à GROMACS.
+    \item
+      Le but est d'avoir les \emph{mêmes} temps d'exécution pour montrer que
+      NSIMD n'a pas d'overhead.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Temps d'exécution}
+  \begin{center}
+    \includegraphics[width=0.75\textwidth]{ns-day-gromacs.pdf}
+  \end{center}
+
+  ``ns/day" signifie nombre de nanosecondes simulées par 24h de calcul.
+\end{frame}
+
+\begin{frame}{Nombre de lignes de code}
+  \begin{center}
+    \includegraphics[width=0.75\textwidth]{simd-loc-gromacs.pdf}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Conclusion et liens}
+  \begin{itemize}
+    \item
+      Diminuer du nombre de lignes de code pour la partie SIMD de GROMACS.
+    \item
+      NSIMD n'a pas d'overhead pour les codes de calcul scientiques et
+      industriels.
+    \item
+      Augmentation de la lisibilité et de la maintenabilité du code.  
+  \end{itemize}
+
+  \begin{enumerate}
+    \item GROMACS: \url{http://www.gromacs.org}
+    \item NSIMD: \url{https://github.com/agenium-scale/nsimd}
+    \item GROMACS with NSIMD: \url{https://github.com/agenium-scale/gromacs}
+    \item AGENIUM SCALE: \url{https://www.agenium-scale.com}
+  \end{enumerate}
+\end{frame}
+
+\end{document}
