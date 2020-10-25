@@ -128,7 +128,7 @@ def draw_graph(output_filename, title, data):
         ax.set(title=title)
     plt.gca().invert_yaxis()
     plt.yticks(ind, labels)
-    plt.savefig(output_filename)
+    plt.savefig(output_filename, transparent=True)
 
 # -----------------------------------------------------------------------------
 
@@ -137,8 +137,8 @@ def get_cpp_loc(output_filename, cpp_files):
     if (os.system(cmd) != 0):
         debug('get_cpp_loc: error: {}'.format(cmd))
         return 0
-    with open(output_filename, 'rb') as fin:
-        for line in perf_file:
+    with open(output_filename) as fin:
+        for line in fin:
             if line.startswith('cpp:'):
                 tab = line.split(' ')
                 return int([i for i in tab[1:] if i != ''][0])
@@ -161,15 +161,16 @@ def draw_graph_loc_simd(output_filename, simd_dir):
                                   [os.path.join(simd_dir, i) \
                                    for i in native_simd_backends])
     nsimd_loc = get_cpp_loc('nsimd_loc.txt',
-                            os.path.join(simd_dir, 'impl_nsimd'))
+                            [os.path.join(simd_dir, 'impl_nsimd')])
 
     plt.rcParams.update({'figure.autolayout': True})
     plt.style.use('ggplot')
     fig, ax = plt.subplots()
 
-    labels = tuple(['Without NSIMD', 'With NSIMD'])
+    labels = tuple(['GROMACS', 'NSIMD'])
     values = tuple([native_simd_loc, nsimd_loc])
     n = len(labels)
+    title = 'LOG'
 
     debug(title)
     debug('values = {}'.format(values))
@@ -179,7 +180,7 @@ def draw_graph_loc_simd(output_filename, simd_dir):
     ind = np.arange(n)
     bars = ax.barh(ind, values)
     for i in range(n):
-        if labels[i] = 'With NSIMD' == -1:
+        if labels[i] == 'NSIMD':
             bars[i].set_color('sandybrown')
         else:
             bars[i].set_color('cadetblue')
@@ -187,7 +188,7 @@ def draw_graph_loc_simd(output_filename, simd_dir):
     ax.set(title=title)
     plt.gca().invert_yaxis()
     plt.yticks(ind, labels)
-    plt.savefig(output_filename)
+    plt.savefig(output_filename, transparent=True)
 
 # -----------------------------------------------------------------------------
 # argv[1]  == GROMACS SIMD backends directory

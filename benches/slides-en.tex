@@ -8,9 +8,8 @@
 \usepackage[utf8]{inputenc}
 \usepackage{helvet}
 
-\title{Bibliothèque NSIMD}
-\subtitle{Application à GROMACS, le logiciel de simulation en dynamique
-          moléculaire}
+\title{The NSIMD library}
+\subtitle{Application to GROMACS, the  molecular dynamics package}
 \date{\today}
 \author{Agenium Scale}
 
@@ -20,52 +19,52 @@
   \maketitle
 \end{frame}
 
-\input{NSIMD-fr.tex}
+\input{NSIMD-en.tex}
 
-\begin{frame}{Application à GROMACS}
+\begin{frame}{Application to GROMACS}
   \begin{itemize}
     \item
-      Logiciel de simulation en dynamique moléculaire développé initialement
-      par l'université de Groningue.
+      Software for simulating molecular dynamics originally developed in the
+      Biophysical Chemistry department of University of Groningen.
     \vspace{1em}
     \item
-      Très bien optimisé pour les CPUs en utilisant les extensions SIMD.
+      Very well optimized for CPUs using SIMD extensions.
     \vspace{1em}
     \item
-      Un dossier de code pour chaque extension SIMD supportée par GROMACS.
+      One directory for each supported SIMD extension by GROMACS.
     \vspace{1em}
     \item
-      NSIMD a été ajoutée comme une ``nouvelle extension SIMD" à GROMACS.
+      NSIMD has been added as a ``new SIMD extension" to GROMACS.
     \vspace{1em}
     \item
-      Le but est d'avoir les \emph{mêmes} temps d'exécution pour montrer que
-      NSIMD n'a pas d'overhead.
+      The goal is to have \emph{same} running times to show that NSIMD does
+      not incur any overhead.
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Temps d'exécution}
+\begin{frame}{Running times}
   \begin{center}
     \includegraphics[width=0.55\textwidth]{ns-day-gromacs.pdf}
   \end{center}
 
-  ``ns/day" signifie nombre de nanosecondes simulées par 24h de calcul.
+  ``ns/day" means number of simulated nanoseconds per 24h of computations.
 \end{frame}
 
-\begin{frame}{Nombre de lignes de code}
+\begin{frame}{Number of lines of code}
   \begin{center}
     \includegraphics[width=0.55\textwidth]{simd-loc-gromacs.pdf}
   \end{center}
 \end{frame}
 
-\begin{frame}{Conclusion et liens}
+\begin{frame}{Conclusion et links}
   \begin{itemize}
     \item
-      Diminuer du nombre de lignes de code pour la partie SIMD de GROMACS.
+      Less lines of code with NSIMD for the SIMD part of GROMACS.
     \item
-      NSIMD n'a pas d'overhead pour les codes de calcul scientiques et
-      industriels.
+      NSIMD has no overhead for scientific and industrial codes that do
+      heavy computations.
     \item
-      Augmentation de la lisibilité et de la maintenabilité du code.  
+      Increase in lisibility and maintainability of the code.
   \end{itemize}
 
   \vspace{2em}
