@@ -25,7 +25,7 @@ def measure2filename(m):
 
 # -----------------------------------------------------------------------------
 
-DEBUG = False
+DEBUG = True
 
 def debug(msg):
     if DEBUG:
@@ -88,8 +88,8 @@ def transpose_dict_dict(d):
 def draw_graph(output_filename, title, data):
     simd_exts_in_order = ["NONE", "SSE2", "NSIMD SSE2", "SSE42", "NSIMD SSE42",
                           "AVX", "NSIMD AVX", "AVX2", "NSIMD AVX2",
-                          "AVX512_KNL", "NSIMD AVX512_KNL", "AVX512_SKYLAKE",
-                          "NSIMD AVX512_SKYLAKE", "NEON128", "NSIMD NEON128",
+                          "AVX512 KNL", "NSIMD AVX512 KNL", "AVX512 SKYLAKE",
+                          "NSIMD AVX512 SKYLAKE", "NEON128", "NSIMD NEON128",
                           "AARCH64", "NSIMD AARCH64"]
 
     #def gen_svg(title, xlabel, mapping, svg):

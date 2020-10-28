@@ -33,8 +33,8 @@
  * the research papers on the package. Check out http://www.gromacs.org.
  */
 
-#ifndef GMX_SIMD_IMPL_X86_NSIMD_H
-#define GMX_SIMD_IMPL_X86_NSIMD_H
+#ifndef GMX_SIMD_IMPL_NSIMD_H
+#define GMX_SIMD_IMPL_NSIMD_H
 
 #include "impl_nsimd_definitions.h"
 #include "impl_nsimd_general.h"
@@ -49,4 +49,4 @@
 #include "impl_nsimd_util_double.h"
 #include "impl_nsimd_util_float.h"
 
-#endif // GMX_SIMD_IMPL_X86_NSIMD_H
+#endif // GMX_SIMD_IMPL_NSIMD_H

@@ -97,9 +97,13 @@ static inline SimdDInt32 gmx_simdcall setZeroDI() {
 
 template <int index>
 static inline std::int32_t gmx_simdcall extract(SimdDInt32 a) {
-#ifdef NSIMD_X86
+#if defined(NSIMD_SSE2)
   return _mm_cvtsi128_si32(
       _mm_srli_si128(a.simdInternal_.native_register(), 4 * index));
+#elif  defined(NSIMD_SSE42) || defined(NSIMD_AVX) || defined(NSIMD_AVX2)
+  return _mm_extract_epi32(a.simdInternal_.native_register(), index);
+#elif defined(NSIMD_AVX512_KNL) || defined(NSIMD_AVX512_SKYLAKE)
+  return _mm256_extract_epi32(a.simdInternal_.native_register(), index);
 #else
   return vgetq_lane_s32(a.simdInternal_.native_register(), index);
 #endif
@@ -269,7 +273,8 @@ static inline SimdDouble ldexp(SimdDouble value, SimdDInt32 exponent) {
                                         float64x2_t(iExponent64)))};
 #else
   const __m256i exponentBias = _mm256_set1_epi32(1023);
-  __m256i iExponent = _mm256_add_epi32(exponent.simdInternal_, exponentBias);
+  __m256i iExponent = _mm256_add_epi32(
+      exponent.simdInternal_.native_register(), exponentBias);
   __m512i iExponent512;
 
   if (opt == MathOptimization::Safe) {
@@ -407,6 +412,15 @@ static inline SimdDInt32 gmx_simdcall cvttR2I(SimdDouble a) {
 #endif
 }
 
+#if defined(NSIMD_AVX512_KNL) || defined(NSIMD_AVX512_SKYLAKE)
+static inline SimdDouble gmx_simdcall copysign(SimdDouble a, SimdDouble b) {
+  return {_mm512_castsi512_pd(_mm512_ternarylogic_epi64(
+      _mm512_castpd_si512(a.simdInternal_.native_register()),
+      _mm512_castpd_si512(b.simdInternal_.native_register()),
+      _mm512_set1_epi64(INT64_MIN), 0xD8))};
+}
+#endif
+
 static inline SimdDouble gmx_simdcall cvtI2R(SimdDInt32 a) {
 #if defined(NSIMD_SSE2) || defined(NSIMD_SSE42)
   return {
@@ -443,7 +457,11 @@ static inline SimdDIBool gmx_simdcall cvtB2IB(SimdDBool a) {
   return {packld_t(vcombine_u32(vqmovn_u64(a.simdInternal_.native_register()),
                                 vdup_n_u32(0)))};
 #else
-  return {nsimd::packl<double>((__mmask16)a.simdInternal_)};
+  return {
+    packld_t(_mm256_mask_mov_epi32(_mm256_setzero_si256(),
+                                   a.simdInternal_.native_register(),
+                                   _mm256_set1_epi32(-1)))
+  };
 #endif
 }
 
@@ -465,7 +483,11 @@ static inline SimdDBool gmx_simdcall cvtIB2B(SimdDIBool a) {
       vshlq_n_u64(vmovl_u32(vget_low_u32(a.simdInternal_.native_register())),
                   32)))};
 #else
-  return {nsimd::packl<double>((__mmask8)a.simdInternal_)};
+  return {
+    nsimd::packl<double>((__mmask8)_mm256_movemask_ps(
+      _mm256_castsi256_ps(a.simdInternal_.native_register())
+    ))
+  };
 #endif
 }
 

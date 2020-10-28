@@ -32,6 +32,9 @@
 # To help us fund GROMACS development, we humbly ask that you cite
 # the research papers on the package. Check out http://www.gromacs.org.
 
+include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
+
 # Helper function to call the correct language version of the CMake
 # check_*_compiler_flag function.
 function(gmx_check_compiler_flag FLAGS LANGUAGE RESULT_VARIABLE)

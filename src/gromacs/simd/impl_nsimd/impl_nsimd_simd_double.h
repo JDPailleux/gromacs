@@ -156,7 +156,7 @@ static inline SimdDouble gmx_simdcall rcp(SimdDouble x) {
   return {nsimd::rec8(x.simdInternal_)};
 }
 
-#if (!defined(NSIMD_AVX512_SKYLAKE) && !defined(NSIMD_AVX512_KNL))
+//#if (!defined(NSIMD_AVX512_SKYLAKE) && !defined(NSIMD_AVX512_KNL))
 
 static inline SimdDouble gmx_simdcall maskAdd(SimdDouble a, SimdDouble b,
                                               SimdDBool m) {
@@ -193,7 +193,7 @@ static inline SimdDouble maskzRcp(SimdDouble x, SimdDBool m) {
 #endif
   return {nsimd::rec8(x.simdInternal_) & nsimd::to_mask(m.simdInternal_)};
 }
-#endif
+//#endif
 
 static inline SimdDouble gmx_simdcall abs(SimdDouble x) {
   return {nsimd::abs(x.simdInternal_)};

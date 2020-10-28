@@ -832,15 +832,21 @@ SimdDInt32 fastMultiply(SimdDInt32 x)
 {
     if (n == 2)
     {
-        return _mm256_slli_epi32(x.simdInternal_.native_register(), 1);
+        return {
+          packd_t(_mm256_slli_epi32(x.simdInternal_.native_register(), 1))
+        };
     }
     else if (n == 4)
     {
-        return _mm256_slli_epi32(x.simdInternal_.native_register(), 2);
+        return {
+          packd_t(_mm256_slli_epi32(x.simdInternal_.native_register(), 2))
+        };
     }
     else if (n == 8)
     {
-        return _mm256_slli_epi32(x.simdInternal_.native_register(), 3);
+        return {
+          packd_t(_mm256_slli_epi32(x.simdInternal_.native_register(), 3))
+        };
     }
     else
     {
