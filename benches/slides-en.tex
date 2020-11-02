@@ -56,20 +56,6 @@
   \end{center}
 \end{frame}
 
-\begin{frame}{Application to EFISPEC3D}
-  \begin{itemize}
-    \item Ground motion simulation based on the Spectral Finite Element Method.
-    \item Similar to SPECFEM3D, extracted from EFISPEC3D developed at GRBM
-          (French geological survey).
-    \item Unstructured mesh: elements share points at boundaries with neighbors
-          $\longrightarrow$ indirection array to avoid storing points multiple
-          times.
-    \item Original code in written in Fortran.
-    \item No/poor automatic vectorization (even with pragmas) on all
-          architectures/compilers
-  \end{itemize}
-\end{frame}
-
 \begin{frame}{Conclusion and links}
   \begin{itemize}
     \item
