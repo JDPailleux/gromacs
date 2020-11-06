@@ -25,7 +25,7 @@ def measure2filename(m):
 
 # -----------------------------------------------------------------------------
 
-DEBUG = True
+DEBUG = False
 
 def debug(msg):
     if DEBUG:
@@ -170,7 +170,7 @@ def draw_graph_loc_simd(output_filename, simd_dir):
     labels = tuple(['GROMACS', 'NSIMD'])
     values = tuple([native_simd_loc, nsimd_loc])
     n = len(labels)
-    title = 'LOG'
+    title = 'LOC'
 
     debug(title)
     debug('values = {}'.format(values))
